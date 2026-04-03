@@ -1,0 +1,81 @@
+/// Command 16 — Read Final Assembly Number
+
+use crate::consts::commands::READ_FINAL_ASSEMBLY_NUMBER;
+use crate::error::{DecodeError, EncodeError};
+use super::{CommandRequest, CommandResponse};
+
+/// Command 16 request: no data payload.
+#[derive(Debug, Clone)]
+pub struct Cmd16Request;
+
+/// Command 16 response: 24-bit final assembly number.
+///
+/// Layout (3 bytes):
+///   [0..2] final_assembly_number (24-bit big-endian)
+#[derive(Debug, Clone, PartialEq)]
+pub struct Cmd16Response {
+    pub final_assembly_number: u32,
+}
+
+impl CommandRequest for Cmd16Request {
+    const COMMAND_NUMBER: u8 = READ_FINAL_ASSEMBLY_NUMBER;
+
+    fn encode_data(&self, _buf: &mut [u8]) -> Result<usize, EncodeError> {
+        Ok(0)
+    }
+}
+
+impl CommandResponse for Cmd16Response {
+    const COMMAND_NUMBER: u8 = READ_FINAL_ASSEMBLY_NUMBER;
+
+    fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
+        if data.len() < 3 {
+            return Err(DecodeError::BufferTooShort);
+        }
+        let final_assembly_number =
+            ((data[0] as u32) << 16) | ((data[1] as u32) << 8) | (data[2] as u32);
+        Ok(Cmd16Response { final_assembly_number })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cmd16_command_number() {
+        assert_eq!(Cmd16Request::COMMAND_NUMBER, 16);
+        assert_eq!(Cmd16Response::COMMAND_NUMBER, 16);
+    }
+
+    #[test]
+    fn test_cmd16_request_encodes_no_data() {
+        let req = Cmd16Request;
+        let mut buf = [0u8; 4];
+        let len = req.encode_data(&mut buf).unwrap();
+        assert_eq!(len, 0);
+    }
+
+    #[test]
+    fn test_cmd16_response_decode() {
+        let data = [0x01u8, 0x02, 0x03];
+        let resp = Cmd16Response::decode_data(&data).unwrap();
+        assert_eq!(resp.final_assembly_number, 0x010203);
+    }
+
+    #[test]
+    fn test_cmd16_response_too_short() {
+        let data = [0x01u8, 0x02]; // needs 3
+        assert_eq!(
+            Cmd16Response::decode_data(&data),
+            Err(DecodeError::BufferTooShort)
+        );
+    }
+
+    #[test]
+    fn test_cmd16_response_max_value() {
+        let data = [0xFFu8, 0xFF, 0xFF];
+        let resp = Cmd16Response::decode_data(&data).unwrap();
+        assert_eq!(resp.final_assembly_number, 0x00FF_FFFF);
+    }
+}
