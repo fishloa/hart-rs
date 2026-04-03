@@ -1,8 +1,8 @@
-/// Command 19 — Write Final Assembly Number
+//! Command 19 — Write Final Assembly Number
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::WRITE_FINAL_ASSEMBLY_NUMBER;
 use crate::error::{DecodeError, EncodeError};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 19 request: 24-bit final assembly number encoded as 3 bytes big-endian.
 #[derive(Debug, Clone)]
@@ -26,10 +26,7 @@ impl CommandRequest for Cmd19Request {
         if buf.len() < 3 {
             return Err(EncodeError::BufferTooSmall);
         }
-        let n = self.final_assembly_number;
-        buf[0] = ((n >> 16) & 0xFF) as u8;
-        buf[1] = ((n >> 8) & 0xFF) as u8;
-        buf[2] = (n & 0xFF) as u8;
+        super::encode_u24_be(self.final_assembly_number, &mut buf[0..3]);
         Ok(3)
     }
 }
@@ -41,9 +38,10 @@ impl CommandResponse for Cmd19Response {
         if data.len() < 3 {
             return Err(DecodeError::BufferTooShort);
         }
-        let final_assembly_number =
-            ((data[0] as u32) << 16) | ((data[1] as u32) << 8) | (data[2] as u32);
-        Ok(Cmd19Response { final_assembly_number })
+        let final_assembly_number = super::decode_u24_be(&data[0..3]);
+        Ok(Cmd19Response {
+            final_assembly_number,
+        })
     }
 }
 
@@ -59,7 +57,9 @@ mod tests {
 
     #[test]
     fn test_cmd19_roundtrip() {
-        let req = Cmd19Request { final_assembly_number: 0xABCDEF };
+        let req = Cmd19Request {
+            final_assembly_number: 0xABCDEF,
+        };
         let mut buf = [0u8; 4];
         let len = req.encode_data(&mut buf).unwrap();
         assert_eq!(len, 3);
@@ -71,7 +71,9 @@ mod tests {
 
     #[test]
     fn test_cmd19_request_buffer_too_small() {
-        let req = Cmd19Request { final_assembly_number: 1 };
+        let req = Cmd19Request {
+            final_assembly_number: 1,
+        };
         let mut buf = [0u8; 2]; // too small
         assert_eq!(req.encode_data(&mut buf), Err(EncodeError::BufferTooSmall));
     }
@@ -87,7 +89,9 @@ mod tests {
 
     #[test]
     fn test_cmd19_encode_zero() {
-        let req = Cmd19Request { final_assembly_number: 0 };
+        let req = Cmd19Request {
+            final_assembly_number: 0,
+        };
         let mut buf = [0u8; 3];
         let len = req.encode_data(&mut buf).unwrap();
         assert_eq!(len, 3);

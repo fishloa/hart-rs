@@ -1,9 +1,9 @@
-/// Command 14 — Read Primary Variable Transducer Information
+//! Command 14 — Read Primary Variable Transducer Information
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_PV_TRANSDUCER_INFO;
 use crate::error::{DecodeError, EncodeError};
 use crate::units::UnitCode;
-use super::{CommandRequest, CommandResponse};
 
 /// Command 14 request: no data payload.
 #[derive(Debug, Clone)]
@@ -41,8 +41,7 @@ impl CommandResponse for Cmd14Response {
         if data.len() < 16 {
             return Err(DecodeError::BufferTooShort);
         }
-        let transducer_serial =
-            ((data[0] as u32) << 16) | ((data[1] as u32) << 8) | (data[2] as u32);
+        let transducer_serial = super::decode_u24_be(&data[0..3]);
         let unit = UnitCode::from_u8(data[3]);
         let upper_limit = f32::from_be_bytes([data[4], data[5], data[6], data[7]]);
         let lower_limit = f32::from_be_bytes([data[8], data[9], data[10], data[11]]);

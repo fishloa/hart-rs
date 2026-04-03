@@ -1,8 +1,8 @@
-/// Command 16 — Read Final Assembly Number
+//! Command 16 — Read Final Assembly Number
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_FINAL_ASSEMBLY_NUMBER;
 use crate::error::{DecodeError, EncodeError};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 16 request: no data payload.
 #[derive(Debug, Clone)]
@@ -32,9 +32,10 @@ impl CommandResponse for Cmd16Response {
         if data.len() < 3 {
             return Err(DecodeError::BufferTooShort);
         }
-        let final_assembly_number =
-            ((data[0] as u32) << 16) | ((data[1] as u32) << 8) | (data[2] as u32);
-        Ok(Cmd16Response { final_assembly_number })
+        let final_assembly_number = super::decode_u24_be(&data[0..3]);
+        Ok(Cmd16Response {
+            final_assembly_number,
+        })
     }
 }
 

@@ -1,9 +1,9 @@
-/// Command 15 — Read Device Information
+//! Command 15 — Read Device Information
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_DEVICE_INFO;
 use crate::error::{DecodeError, EncodeError};
 use crate::units::UnitCode;
-use super::{CommandRequest, CommandResponse};
 
 /// Command 15 request: no data payload.
 #[derive(Debug, Clone)]
@@ -96,7 +96,7 @@ mod tests {
         let mut data = [0u8; 17];
         data[0] = 0x00; // alarm selection: high
         data[1] = 0x00; // transfer function: linear
-        data[2] = 45;   // Meters
+        data[2] = 45; // Meters
         data[3..7].copy_from_slice(&upper_bytes);
         data[7..11].copy_from_slice(&lower_bytes);
         data[11..15].copy_from_slice(&damp_bytes);

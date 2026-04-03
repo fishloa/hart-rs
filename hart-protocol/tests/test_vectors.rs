@@ -25,8 +25,7 @@ const REQ_CMD0_SHORT_PRIMARY: &[u8] = &[
 
 /// Command 0 request, short addr 0, secondary master
 const REQ_CMD0_SHORT_SECONDARY: &[u8] = &[
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x02, // delimiter: request short
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x02, // delimiter: request short
     0x00, // address: secondary master, poll addr 0
     0x00, // command 0
     0x00, // byte count 0
@@ -35,8 +34,7 @@ const REQ_CMD0_SHORT_SECONDARY: &[u8] = &[
 
 /// Command 0 request, long addr, primary master
 const REQ_CMD0_LONG_PRIMARY: &[u8] = &[
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x82, // delimiter: request long
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x82, // delimiter: request long
     0x9A, 0x2B, 0x11, 0x22, 0x33, // long address
     0x00, // command 0
     0x00, // byte count 0
@@ -45,32 +43,21 @@ const REQ_CMD0_LONG_PRIMARY: &[u8] = &[
 
 /// Command 1 request, long addr, primary master
 const REQ_CMD1_LONG_PRIMARY: &[u8] = &[
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x82,
-    0x9A, 0x2B, 0x11, 0x22, 0x33,
-    0x01, // command 1
-    0x00,
-    0x32, // checksum
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x82, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x01, // command 1
+    0x00, 0x32, // checksum
 ];
 
 /// Command 3 request, long addr, primary master
 const REQ_CMD3_LONG_PRIMARY: &[u8] = &[
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x82,
-    0x9A, 0x2B, 0x11, 0x22, 0x33,
-    0x03, // command 3
-    0x00,
-    0x30, // checksum
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x82, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x03, // command 3
+    0x00, 0x30, // checksum
 ];
 
 /// Command 48 request, long addr, primary master
 const REQ_CMD48_LONG_PRIMARY: &[u8] = &[
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x82,
-    0x9A, 0x2B, 0x11, 0x22, 0x33,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x82, 0x9A, 0x2B, 0x11, 0x22, 0x33,
     0x30, // command 48 = 0x30
-    0x00,
-    0x03, // checksum
+    0x00, 0x03, // checksum
 ];
 
 // =========================================================================
@@ -81,8 +68,7 @@ const REQ_CMD48_LONG_PRIMARY: &[u8] = &[
 /// preambles=5, hart_rev=7, dev_rev=1, sw_rev=3, hw_rev=4, flags=0,
 /// device_id=0x112233
 const RESP_CMD0_LONG: &[u8] = &[
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x86, // delimiter: response long
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x86, // delimiter: response long
     0x9A, 0x2B, 0x11, 0x22, 0x33, // long address
     0x00, // command 0
     0x0E, // byte count 14 (2 status + 12 data)
@@ -103,10 +89,7 @@ const RESP_CMD0_LONG: &[u8] = &[
 
 /// Command 1 response: PV = 3.14 meters
 const RESP_CMD1_LONG: &[u8] = &[
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x86,
-    0x9A, 0x2B, 0x11, 0x22, 0x33,
-    0x01, // command 1
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x86, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x01, // command 1
     0x07, // byte count 7 (2 status + 5 data)
     0x00, 0x00, // status: no errors
     0x2D, // unit: meters (45 = 0x2D)
@@ -116,10 +99,7 @@ const RESP_CMD1_LONG: &[u8] = &[
 
 /// Command 2 response: current=12.5 mA, percent=53.125%
 const RESP_CMD2_LONG: &[u8] = &[
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x86,
-    0x9A, 0x2B, 0x11, 0x22, 0x33,
-    0x02, // command 2
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x86, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x02, // command 2
     0x0A, // byte count 10 (2 status + 8 data)
     0x00, 0x00, // status
     0x41, 0x48, 0x00, 0x00, // 12.5 mA
@@ -130,31 +110,20 @@ const RESP_CMD2_LONG: &[u8] = &[
 /// Command 3 response: current=12.5mA, PV=53.125%(57), SV=2.5m(45),
 /// TV=NaN/not_used(250), QV=25.3°C(32)
 const RESP_CMD3_LONG: &[u8] = &[
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x86,
-    0x9A, 0x2B, 0x11, 0x22, 0x33,
-    0x03, // command 3
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x86, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x03, // command 3
     0x1A, // byte count 26 (2 status + 24 data)
     0x00, 0x00, // status
     // loop current: 12.5 mA
-    0x41, 0x48, 0x00, 0x00,
-    // PV: percent(57=0x39), 53.125
-    0x39, 0x42, 0x54, 0x80, 0x00,
-    // SV: meters(45=0x2D), 2.5
-    0x2D, 0x40, 0x20, 0x00, 0x00,
-    // TV: not_used(250=0xFA), NaN
-    0xFA, 0x7F, 0xC0, 0x00, 0x00,
-    // QV: celsius(32=0x20), 25.3
-    0x20, 0x41, 0xCA, 0x66, 0x66,
-    0x2B, // checksum
+    0x41, 0x48, 0x00, 0x00, // PV: percent(57=0x39), 53.125
+    0x39, 0x42, 0x54, 0x80, 0x00, // SV: meters(45=0x2D), 2.5
+    0x2D, 0x40, 0x20, 0x00, 0x00, // TV: not_used(250=0xFA), NaN
+    0xFA, 0x7F, 0xC0, 0x00, 0x00, // QV: celsius(32=0x20), 25.3
+    0x20, 0x41, 0xCA, 0x66, 0x66, 0x2B, // checksum
 ];
 
 /// Command 48 response: 5 device-specific status bytes
 const RESP_CMD48_LONG: &[u8] = &[
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x86,
-    0x9A, 0x2B, 0x11, 0x22, 0x33,
-    0x30, // command 48
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x86, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x30, // command 48
     0x07, // byte count 7 (2 status + 5 data)
     0x00, 0x00, // status
     0x00, 0x01, 0x02, 0x03, 0x04, // device-specific status
@@ -182,11 +151,11 @@ use hart_protocol::commands::cmd2::Cmd2Response;
 use hart_protocol::commands::cmd3::{Cmd3Request, Cmd3Response};
 use hart_protocol::commands::cmd48::{Cmd48Request, Cmd48Response};
 use hart_protocol::commands::{CommandRequest, CommandResponse};
+use hart_protocol::consts::MIN_PREAMBLE_COUNT;
 use hart_protocol::decode::Decoder;
 use hart_protocol::encode::encode_frame;
 use hart_protocol::types::{Address, FrameType, MasterRole};
 use hart_protocol::units::UnitCode;
-use hart_protocol::consts::MIN_PREAMBLE_COUNT;
 
 fn feed_all(decoder: &mut Decoder, bytes: &[u8]) -> Option<hart_protocol::decode::RawFrame> {
     for &b in bytes {
@@ -209,7 +178,15 @@ fn test_vector_req_cmd0_short_primary() {
         poll_address: 0,
     };
     let mut buf = [0u8; 32];
-    let len = encode_frame(FrameType::Request, &addr, 0, &[], MIN_PREAMBLE_COUNT, &mut buf).unwrap();
+    let len = encode_frame(
+        FrameType::Request,
+        &addr,
+        0,
+        &[],
+        MIN_PREAMBLE_COUNT,
+        &mut buf,
+    )
+    .unwrap();
     assert_eq!(&buf[..len], REQ_CMD0_SHORT_PRIMARY);
 }
 
@@ -221,7 +198,15 @@ fn test_vector_req_cmd0_short_secondary() {
         poll_address: 0,
     };
     let mut buf = [0u8; 32];
-    let len = encode_frame(FrameType::Request, &addr, 0, &[], MIN_PREAMBLE_COUNT, &mut buf).unwrap();
+    let len = encode_frame(
+        FrameType::Request,
+        &addr,
+        0,
+        &[],
+        MIN_PREAMBLE_COUNT,
+        &mut buf,
+    )
+    .unwrap();
     assert_eq!(&buf[..len], REQ_CMD0_SHORT_SECONDARY);
 }
 
@@ -235,7 +220,15 @@ fn test_vector_req_cmd0_long_primary() {
         device_id: 0x112233,
     };
     let mut buf = [0u8; 32];
-    let len = encode_frame(FrameType::Request, &addr, 0, &[], MIN_PREAMBLE_COUNT, &mut buf).unwrap();
+    let len = encode_frame(
+        FrameType::Request,
+        &addr,
+        0,
+        &[],
+        MIN_PREAMBLE_COUNT,
+        &mut buf,
+    )
+    .unwrap();
     assert_eq!(&buf[..len], REQ_CMD0_LONG_PRIMARY);
 }
 
@@ -259,7 +252,8 @@ fn test_vector_req_cmd1_long_primary() {
         &data_buf[..data_len],
         MIN_PREAMBLE_COUNT,
         &mut frame_buf,
-    ).unwrap();
+    )
+    .unwrap();
     assert_eq!(&frame_buf[..len], REQ_CMD1_LONG_PRIMARY);
 }
 
@@ -283,7 +277,8 @@ fn test_vector_req_cmd3_long_primary() {
         &data_buf[..data_len],
         MIN_PREAMBLE_COUNT,
         &mut frame_buf,
-    ).unwrap();
+    )
+    .unwrap();
     assert_eq!(&frame_buf[..len], REQ_CMD3_LONG_PRIMARY);
 }
 
@@ -307,7 +302,8 @@ fn test_vector_req_cmd48_long_primary() {
         &data_buf[..data_len],
         MIN_PREAMBLE_COUNT,
         &mut frame_buf,
-    ).unwrap();
+    )
+    .unwrap();
     assert_eq!(&frame_buf[..len], REQ_CMD48_LONG_PRIMARY);
 }
 
@@ -385,7 +381,7 @@ fn test_vector_decode_resp_cmd48_long() {
     let mut dec = Decoder::new();
     let frame = feed_all(&mut dec, RESP_CMD48_LONG).unwrap();
     assert_eq!(frame.command, 0x30); // 48 = 0x30
-    // byte_count = 0x07 = 7
+                                     // byte_count = 0x07 = 7
     assert_eq!(frame.data.len(), 7);
     let resp = Cmd48Response::decode_data(&frame.data[2..]).unwrap();
     assert_eq!(resp.data.as_slice(), &[0x00, 0x01, 0x02, 0x03, 0x04]);

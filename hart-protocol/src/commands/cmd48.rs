@@ -1,10 +1,10 @@
-/// Command 48 — Read Additional Device Status
+//! Command 48 — Read Additional Device Status
 
 use heapless::Vec;
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_ADDITIONAL_STATUS;
 use crate::error::{DecodeError, EncodeError};
-use super::{CommandRequest, CommandResponse};
 
 /// Maximum number of additional status bytes for Command 48.
 const CMD48_MAX_STATUS_BYTES: usize = 25;

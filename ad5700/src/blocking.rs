@@ -32,9 +32,7 @@ where
     /// Asserts RTS before writing, then deasserts RTS after flushing.
     pub fn transmit(&mut self, data: &[u8]) -> Result<(), Ad5700Error<<UART as ErrorType>::Error>> {
         self.rts.set_high().map_err(|_| Ad5700Error::NoCarrier)?;
-        self.uart
-            .write_all(data)
-            .map_err(Ad5700Error::Uart)?;
+        self.uart.write_all(data).map_err(Ad5700Error::Uart)?;
         self.uart.flush().map_err(Ad5700Error::Uart)?;
         self.rts.set_low().map_err(|_| Ad5700Error::NoCarrier)?;
         Ok(())

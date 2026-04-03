@@ -1,9 +1,9 @@
-/// Command 17 — Write Message
+//! Command 17 — Write Message
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::WRITE_MESSAGE;
 use crate::error::{DecodeError, EncodeError};
 use crate::packed_string::{decode_packed, encode_packed};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 17 request: 32-character message, encoded as 24 packed bytes on the wire.
 #[derive(Debug, Clone)]
@@ -70,7 +70,9 @@ mod tests {
 
     #[test]
     fn test_cmd17_request_buffer_too_small() {
-        let req = Cmd17Request { message: [b' '; 32] };
+        let req = Cmd17Request {
+            message: [b' '; 32],
+        };
         let mut buf = [0u8; 20]; // too small
         assert_eq!(req.encode_data(&mut buf), Err(EncodeError::BufferTooSmall));
     }

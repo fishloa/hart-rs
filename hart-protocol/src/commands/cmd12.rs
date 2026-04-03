@@ -1,9 +1,9 @@
-/// Command 12 — Read Message
+//! Command 12 — Read Message
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_MESSAGE;
 use crate::error::{DecodeError, EncodeError};
 use crate::packed_string::decode_packed;
-use super::{CommandRequest, CommandResponse};
 
 /// Command 12 request: no data payload.
 #[derive(Debug, Clone)]

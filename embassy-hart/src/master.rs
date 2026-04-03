@@ -1,8 +1,8 @@
 //! Async HART master for Embassy, built on the AD5700 async modem.
 
+use embassy_time::{with_timeout, Duration};
 use embedded_hal::digital::{InputPin, OutputPin};
 use embedded_io_async::{ErrorType, Read, Write};
-use embassy_time::{Duration, with_timeout};
 
 use hart_protocol::{
     commands::{CommandRequest, CommandResponse},
@@ -12,10 +12,7 @@ use hart_protocol::{
     types::{Address, FrameType, ResponseStatus},
 };
 
-use ad5700::{
-    asynch::Ad5700Async,
-    error::HartError,
-};
+use ad5700::{asynch::Ad5700Async, error::HartError};
 
 /// Async HART master controller for Embassy.
 ///

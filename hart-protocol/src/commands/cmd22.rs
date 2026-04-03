@@ -1,8 +1,8 @@
-/// Command 22 — Write Long Tag
+//! Command 22 — Write Long Tag
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::WRITE_LONG_TAG;
 use crate::error::{DecodeError, EncodeError};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 22 request: 32-byte plain ASCII long tag.
 #[derive(Debug, Clone)]
@@ -72,7 +72,9 @@ mod tests {
 
     #[test]
     fn test_cmd22_request_buffer_too_small() {
-        let req = Cmd22Request { long_tag: [b' '; 32] };
+        let req = Cmd22Request {
+            long_tag: [b' '; 32],
+        };
         let mut buf = [0u8; 31]; // too small
         assert_eq!(req.encode_data(&mut buf), Err(EncodeError::BufferTooSmall));
     }

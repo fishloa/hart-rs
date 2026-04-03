@@ -35,10 +35,7 @@ where
         data: &[u8],
     ) -> Result<(), Ad5700Error<<UART as ErrorType>::Error>> {
         self.rts.set_high().map_err(|_| Ad5700Error::NoCarrier)?;
-        self.uart
-            .write_all(data)
-            .await
-            .map_err(Ad5700Error::Uart)?;
+        self.uart.write_all(data).await.map_err(Ad5700Error::Uart)?;
         self.uart.flush().await.map_err(Ad5700Error::Uart)?;
         self.rts.set_low().map_err(|_| Ad5700Error::NoCarrier)?;
         Ok(())

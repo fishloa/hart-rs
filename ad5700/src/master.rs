@@ -11,10 +11,7 @@ use hart_protocol::{
     types::{Address, FrameType, ResponseStatus},
 };
 
-use crate::{
-    blocking::Ad5700,
-    error::HartError,
-};
+use crate::{blocking::Ad5700, error::HartError};
 
 /// Blocking HART master controller.
 ///

@@ -1,8 +1,8 @@
-/// Command 2 — Read Loop Current and Percent of Range
+//! Command 2 — Read Loop Current and Percent of Range
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_LOOP_CURRENT_PERCENT;
 use crate::error::{DecodeError, EncodeError};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 2 request: no data payload.
 #[derive(Debug, Clone)]

@@ -1,8 +1,8 @@
-/// Command 20 — Read Long Tag
+//! Command 20 — Read Long Tag
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_LONG_TAG;
 use crate::error::{DecodeError, EncodeError};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 20 request: no data payload.
 #[derive(Debug, Clone)]

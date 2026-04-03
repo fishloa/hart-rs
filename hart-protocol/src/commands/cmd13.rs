@@ -1,9 +1,9 @@
-/// Command 13 — Read Tag, Descriptor, and Date
+//! Command 13 — Read Tag, Descriptor, and Date
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_TAG_DESCRIPTOR_DATE;
 use crate::error::{DecodeError, EncodeError};
 use crate::packed_string::decode_packed;
-use super::{CommandRequest, CommandResponse};
 
 /// Command 13 request: no data payload.
 #[derive(Debug, Clone)]
@@ -92,7 +92,7 @@ mod tests {
         encode_packed(desc_str, &mut data[6..18]);
         // Date
         data[18] = 15; // day
-        data[19] = 6;  // month
+        data[19] = 6; // month
         data[20] = 123; // year (1900+123 = 2023)
 
         let resp = Cmd13Response::decode_data(&data).unwrap();

@@ -1,8 +1,8 @@
-/// Command 7 — Read Loop Configuration
+//! Command 7 — Read Loop Configuration
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_LOOP_CONFIG;
 use crate::error::{DecodeError, EncodeError};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 7 request: no data payload.
 #[derive(Debug, Clone)]

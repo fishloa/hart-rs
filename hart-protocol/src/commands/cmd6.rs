@@ -1,8 +1,8 @@
-/// Command 6 — Write Polling Address
+//! Command 6 — Write Polling Address
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::WRITE_POLLING_ADDRESS;
 use crate::error::{DecodeError, EncodeError};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 6 request: polling address and loop current mode.
 ///

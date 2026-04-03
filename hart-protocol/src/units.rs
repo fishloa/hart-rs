@@ -560,7 +560,12 @@ mod tests {
         for &(code, ref expected) in cases {
             let decoded = UnitCode::from_u8(code);
             assert_eq!(&decoded, expected, "from_u8({}) mismatch", code);
-            assert_eq!(decoded.as_u8(), code, "as_u8() roundtrip failed for code {}", code);
+            assert_eq!(
+                decoded.as_u8(),
+                code,
+                "as_u8() roundtrip failed for code {}",
+                code
+            );
         }
     }
 
@@ -605,22 +610,12 @@ mod tests {
     fn test_all_known_codes_survive_roundtrip() {
         // All explicitly known codes (not Unknown) should survive as_u8 -> from_u8 -> as_u8
         let known_codes: &[u8] = &[
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-            11, 12, 13, 14, 15, 16, 17, 18, 19,
-            22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-            32, 33, 34, 35, 36, 37, 38, 39,
-            40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
-            50, 51, 52, 53, 57,
-            60, 61, 62, 63,
-            70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
-            80, 81, 82, 83, 84, 85,
-            91, 92, 93, 94, 95, 96, 97,
-            110, 111, 112, 113, 124,
-            130, 131, 132, 133, 134, 135, 136, 137, 138,
-            145,
-            235, 236, 237, 238, 239,
-            240, 241, 242, 243, 244, 249,
-            250, 251, 252, 253,
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22, 23, 24, 25, 26,
+            27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
+            49, 50, 51, 52, 53, 57, 60, 61, 62, 63, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81,
+            82, 83, 84, 85, 91, 92, 93, 94, 95, 96, 97, 110, 111, 112, 113, 124, 130, 131, 132,
+            133, 134, 135, 136, 137, 138, 145, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244,
+            249, 250, 251, 252, 253,
         ];
         for &code in known_codes {
             let unit = UnitCode::from_u8(code);
@@ -632,6 +627,59 @@ mod tests {
             );
             // Roundtrip
             assert_eq!(unit.as_u8(), code, "roundtrip failed for code {}", code);
+        }
+    }
+
+    #[test]
+    fn test_all_u8_values_roundtrip() {
+        // Every u8 value should survive from_u8 -> as_u8 -> from_u8
+        for code in 0u8..=255u8 {
+            let unit = UnitCode::from_u8(code);
+            let back = unit.as_u8();
+            assert_eq!(back, code, "as_u8 roundtrip failed for code {}", code);
+            let unit2 = UnitCode::from_u8(back);
+            assert_eq!(
+                unit2.as_u8(),
+                code,
+                "double roundtrip failed for code {}",
+                code
+            );
+        }
+    }
+
+    #[test]
+    fn test_code_zero_is_unknown() {
+        // Code 0 is not defined in the HART unit code table
+        let unit = UnitCode::from_u8(0);
+        assert_eq!(unit, UnitCode::Unknown(0));
+        assert_eq!(unit.as_u8(), 0);
+    }
+
+    #[test]
+    fn test_code_254_is_unknown() {
+        let unit = UnitCode::from_u8(254);
+        assert_eq!(unit, UnitCode::Unknown(254));
+    }
+
+    #[test]
+    fn test_code_255_is_unknown() {
+        let unit = UnitCode::from_u8(255);
+        assert_eq!(unit, UnitCode::Unknown(255));
+    }
+
+    #[test]
+    fn test_programmable_units_roundtrip() {
+        let cases = [
+            (240, UnitCode::ProgrammableUnitPerSecond),
+            (241, UnitCode::ProgrammableUnitPerMinute),
+            (242, UnitCode::ProgrammableUnitPerHour),
+            (243, UnitCode::ProgrammableUnitPerDay),
+            (244, UnitCode::ProgrammableUnit244),
+            (249, UnitCode::ProgrammableUnit249),
+        ];
+        for (code, expected) in cases {
+            assert_eq!(UnitCode::from_u8(code), expected);
+            assert_eq!(expected.as_u8(), code);
         }
     }
 }

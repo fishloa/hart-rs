@@ -1,9 +1,9 @@
-/// Command 3 — Read Dynamic Variables and Loop Current
+//! Command 3 — Read Dynamic Variables and Loop Current
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_DYNAMIC_VARS;
 use crate::error::{DecodeError, EncodeError};
 use crate::units::UnitCode;
-use super::{CommandRequest, CommandResponse};
 
 /// Command 3 request: no data payload.
 #[derive(Debug, Clone)]
@@ -98,14 +98,10 @@ mod tests {
         // TV=not_used(250)/NaN, QV=celsius(32)/25.3
         let data = [
             // loop current: 12.5 mA
-            0x41, 0x48, 0x00, 0x00,
-            // PV: percent(57=0x39), 53.125
-            0x39, 0x42, 0x54, 0x80, 0x00,
-            // SV: meters(45=0x2D), 2.5
-            0x2D, 0x40, 0x20, 0x00, 0x00,
-            // TV: not_used(250=0xFA), NaN
-            0xFA, 0x7F, 0xC0, 0x00, 0x00,
-            // QV: celsius(32=0x20), 25.3
+            0x41, 0x48, 0x00, 0x00, // PV: percent(57=0x39), 53.125
+            0x39, 0x42, 0x54, 0x80, 0x00, // SV: meters(45=0x2D), 2.5
+            0x2D, 0x40, 0x20, 0x00, 0x00, // TV: not_used(250=0xFA), NaN
+            0xFA, 0x7F, 0xC0, 0x00, 0x00, // QV: celsius(32=0x20), 25.3
             0x20, 0x41, 0xCA, 0x66, 0x66,
         ];
         let resp = Cmd3Response::decode_data(&data).unwrap();

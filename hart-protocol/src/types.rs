@@ -34,7 +34,11 @@ impl Address {
     /// Encodes the address into `buf`. Returns the number of bytes written (1 for short, 5 for long).
     pub fn encode(&self, buf: &mut [u8]) -> usize {
         match self {
-            Address::Short { master, burst, poll_address } => {
+            Address::Short {
+                master,
+                burst,
+                poll_address,
+            } => {
                 let mut byte = poll_address & address::SHORT_ADDRESS_MASK;
                 if *master == MasterRole::Primary {
                     byte |= address::PRIMARY_MASTER_BIT;
@@ -45,7 +49,13 @@ impl Address {
                 buf[0] = byte;
                 1
             }
-            Address::Long { master, burst, manufacturer_id, device_type, device_id } => {
+            Address::Long {
+                master,
+                burst,
+                manufacturer_id,
+                device_type,
+                device_id,
+            } => {
                 // Byte 0: master bit | burst bit | manufacturer_id (6 bits)
                 let mut b0 = manufacturer_id & address::MANUFACTURER_ID_MASK;
                 if *master == MasterRole::Primary {
@@ -305,5 +315,88 @@ mod tests {
     fn test_decode_buffer_too_short_long() {
         let result = Address::decode(&[0x00, 0x01, 0x02], true);
         assert_eq!(result, Err(DecodeError::BufferTooShort));
+    }
+
+    #[test]
+    fn test_short_address_all_poll_addresses() {
+        for poll in 0..=15u8 {
+            let addr = Address::Short {
+                master: MasterRole::Primary,
+                burst: false,
+                poll_address: poll,
+            };
+            let mut buf = [0u8; 1];
+            addr.encode(&mut buf);
+            let (decoded, consumed) = Address::decode(&buf, false).unwrap();
+            assert_eq!(consumed, 1);
+            assert_eq!(decoded, addr, "roundtrip failed for poll_address={}", poll);
+        }
+    }
+
+    #[test]
+    fn test_long_address_manufacturer_id_zero() {
+        let addr = Address::Long {
+            master: MasterRole::Primary,
+            burst: false,
+            manufacturer_id: 0,
+            device_type: 0,
+            device_id: 0,
+        };
+        let mut buf = [0u8; 5];
+        addr.encode(&mut buf);
+        let (decoded, _) = Address::decode(&buf, true).unwrap();
+        assert_eq!(decoded, addr);
+    }
+
+    #[test]
+    fn test_long_address_manufacturer_id_max() {
+        let addr = Address::Long {
+            master: MasterRole::Primary,
+            burst: false,
+            manufacturer_id: 0x3F, // max 6-bit value
+            device_type: 0xFF,
+            device_id: 0x00FF_FFFF,
+        };
+        let mut buf = [0u8; 5];
+        addr.encode(&mut buf);
+        let (decoded, _) = Address::decode(&buf, true).unwrap();
+        assert_eq!(decoded, addr);
+    }
+
+    #[test]
+    fn test_long_address_device_id_zero() {
+        let addr = Address::Long {
+            master: MasterRole::Secondary,
+            burst: true,
+            manufacturer_id: 0x1A,
+            device_type: 0x2B,
+            device_id: 0,
+        };
+        let mut buf = [0u8; 5];
+        addr.encode(&mut buf);
+        let (decoded, _) = Address::decode(&buf, true).unwrap();
+        assert_eq!(decoded, addr);
+    }
+
+    #[test]
+    fn test_response_status_all_byte0_errors() {
+        // All bits set in byte 0 = communication error
+        let status = ResponseStatus::from_bytes([0xFF, 0x00]);
+        assert!(status.has_error());
+    }
+
+    #[test]
+    fn test_decode_buffer_too_short_long_4_bytes() {
+        let result = Address::decode(&[0x00, 0x01, 0x02, 0x03], true);
+        assert_eq!(result, Err(DecodeError::BufferTooShort));
+    }
+
+    #[test]
+    fn test_long_address_exactly_5_bytes() {
+        let result = Address::decode(&[0x80, 0x00, 0x00, 0x00, 0x00], true);
+        assert!(result.is_ok());
+        let (addr, consumed) = result.unwrap();
+        assert_eq!(consumed, 5);
+        assert!(addr.is_long());
     }
 }

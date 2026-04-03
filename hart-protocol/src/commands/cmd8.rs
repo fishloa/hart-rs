@@ -1,8 +1,8 @@
-/// Command 8 — Read Dynamic Variable Classifications
+//! Command 8 — Read Dynamic Variable Classifications
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_DYNAMIC_VAR_CLASS;
 use crate::error::{DecodeError, EncodeError};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 8 request: no data payload.
 #[derive(Debug, Clone)]

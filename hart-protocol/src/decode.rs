@@ -166,7 +166,8 @@ impl Decoder {
                 }
 
                 // Build the address
-                let addr_result = Address::decode(&self.addr_buf[..self.addr_len as usize], self.is_long);
+                let addr_result =
+                    Address::decode(&self.addr_buf[..self.addr_len as usize], self.is_long);
                 let address = match addr_result {
                     Ok((addr, _)) => addr,
                     Err(e) => {
@@ -226,37 +227,17 @@ mod tests {
     use crate::types::{Address, FrameType, MasterRole};
 
     // Test vectors from test_vectors.rs
-    const REQ_CMD0_SHORT_PRIMARY: &[u8] = &[
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0x02,
-        0x80,
-        0x00,
-        0x00,
-        0x82,
-    ];
+    const REQ_CMD0_SHORT_PRIMARY: &[u8] =
+        &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x02, 0x80, 0x00, 0x00, 0x82];
 
     const REQ_CMD0_LONG_PRIMARY: &[u8] = &[
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0x82,
-        0x9A, 0x2B, 0x11, 0x22, 0x33,
-        0x00,
-        0x00,
-        0x33,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x82, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x00, 0x00, 0x33,
     ];
 
     const RESP_CMD3_LONG: &[u8] = &[
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0x86,
-        0x9A, 0x2B, 0x11, 0x22, 0x33,
-        0x03,
-        0x1A,
-        0x00, 0x00,
-        0x41, 0x48, 0x00, 0x00,
-        0x39, 0x42, 0x54, 0x80, 0x00,
-        0x2D, 0x40, 0x20, 0x00, 0x00,
-        0xFA, 0x7F, 0xC0, 0x00, 0x00,
-        0x20, 0x41, 0xCA, 0x66, 0x66,
-        0x2B,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x86, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x03, 0x1A, 0x00, 0x00,
+        0x41, 0x48, 0x00, 0x00, 0x39, 0x42, 0x54, 0x80, 0x00, 0x2D, 0x40, 0x20, 0x00, 0x00, 0xFA,
+        0x7F, 0xC0, 0x00, 0x00, 0x20, 0x41, 0xCA, 0x66, 0x66, 0x2B,
     ];
 
     fn feed_all(decoder: &mut Decoder, bytes: &[u8]) -> Result<Option<RawFrame>, DecodeError> {
@@ -412,6 +393,93 @@ mod tests {
         }
         // No frame should have been produced; decoder should be in Hunting or Preamble state
         // Feed a valid frame now and verify it decodes
+        let frame = feed_all(&mut dec, REQ_CMD0_SHORT_PRIMARY).unwrap().unwrap();
+        assert_eq!(frame.command, 0);
+    }
+
+    #[test]
+    fn test_multiple_frames_in_sequence() {
+        let mut dec = Decoder::new();
+        // Decode first frame
+        let frame1 = feed_all(&mut dec, REQ_CMD0_SHORT_PRIMARY).unwrap().unwrap();
+        assert_eq!(frame1.command, 0);
+        assert_eq!(frame1.frame_type, FrameType::Request);
+
+        // Decode second frame (long) immediately after
+        let frame2 = feed_all(&mut dec, REQ_CMD0_LONG_PRIMARY).unwrap().unwrap();
+        assert_eq!(frame2.command, 0);
+        assert_eq!(frame2.frame_type, FrameType::Request);
+        assert!(frame2.address.is_long());
+    }
+
+    #[test]
+    fn test_decode_response_frame() {
+        let mut dec = Decoder::new();
+        let frame = feed_all(&mut dec, RESP_CMD3_LONG).unwrap().unwrap();
+        assert_eq!(frame.frame_type, FrameType::Response);
+        assert_eq!(frame.command, 3);
+    }
+
+    #[test]
+    fn test_decode_default_is_equivalent_to_new() {
+        let d1 = Decoder::new();
+        let mut d2 = Decoder::default();
+        // Both should decode the same frame
+        let frame = feed_all(&mut d2, REQ_CMD0_SHORT_PRIMARY).unwrap().unwrap();
+        assert_eq!(frame.command, 0);
+        // d1 can also be used
+        let mut d1 = d1;
+        let frame = feed_all(&mut d1, REQ_CMD0_SHORT_PRIMARY).unwrap().unwrap();
+        assert_eq!(frame.command, 0);
+    }
+
+    #[test]
+    fn test_decode_roundtrip_response_long_with_data() {
+        // Encode a response frame and decode it
+        let address = Address::Long {
+            master: MasterRole::Primary,
+            burst: false,
+            manufacturer_id: 0x1A,
+            device_type: 0x2B,
+            device_id: 0x112233,
+        };
+        let data = [0x00, 0x00, 0x2D, 0x40, 0x48, 0xF5, 0xC3]; // status + cmd1 resp
+        let mut buf = [0u8; 64];
+        let len = encode_frame(FrameType::Response, &address, 1, &data, 5, &mut buf).unwrap();
+
+        let mut dec = Decoder::new();
+        let frame = feed_all(&mut dec, &buf[..len]).unwrap().unwrap();
+        assert_eq!(frame.frame_type, FrameType::Response);
+        assert_eq!(frame.command, 1);
+        assert_eq!(frame.data.as_slice(), &data);
+    }
+
+    #[test]
+    fn test_decode_roundtrip_burst_frame() {
+        let address = Address::Short {
+            master: MasterRole::Primary,
+            burst: true,
+            poll_address: 0,
+        };
+        let mut buf = [0u8; 64];
+        let len = encode_frame(FrameType::Burst, &address, 1, &[0xAB], 5, &mut buf).unwrap();
+
+        let mut dec = Decoder::new();
+        let frame = feed_all(&mut dec, &buf[..len]).unwrap().unwrap();
+        assert_eq!(frame.frame_type, FrameType::Burst);
+        assert_eq!(frame.command, 1);
+        assert_eq!(frame.data.as_slice(), &[0xAB]);
+    }
+
+    #[test]
+    fn test_reset_between_frames() {
+        let mut dec = Decoder::new();
+        // Feed half of a frame
+        for &b in &REQ_CMD0_SHORT_PRIMARY[..6] {
+            dec.feed(b).unwrap();
+        }
+        // Reset and feed a complete frame
+        dec.reset();
         let frame = feed_all(&mut dec, REQ_CMD0_SHORT_PRIMARY).unwrap().unwrap();
         assert_eq!(frame.command, 0);
     }

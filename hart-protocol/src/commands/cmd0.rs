@@ -1,8 +1,8 @@
-/// Command 0 — Read Unique Identifier (Device ID)
+//! Command 0 — Read Unique Identifier (Device ID)
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_DEVICE_ID;
 use crate::error::{DecodeError, EncodeError};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 0 request: no data payload.
 #[derive(Debug, Clone)]
@@ -46,32 +46,18 @@ impl CommandResponse for Cmd0Response {
     const COMMAND_NUMBER: u8 = READ_DEVICE_ID;
 
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
-        if data.len() < 12 {
-            return Err(DecodeError::BufferTooShort);
-        }
-        let expansion_code = data[0];
-        let expanded_device_type = ((data[1] as u16) << 8) | (data[2] as u16);
-        let min_preamble_count = data[3];
-        let hart_revision = data[4];
-        let device_revision = data[5];
-        let software_revision = data[6];
-        let hw_raw = data[7];
-        let hardware_revision = hw_raw >> 3;
-        let physical_signaling = hw_raw & 0x07;
-        let flags = data[8];
-        let device_id = ((data[9] as u32) << 16) | ((data[10] as u32) << 8) | (data[11] as u32);
-
+        let id = super::DeviceIdentity::decode(data)?;
         Ok(Cmd0Response {
-            expansion_code,
-            expanded_device_type,
-            min_preamble_count,
-            hart_revision,
-            device_revision,
-            software_revision,
-            hardware_revision,
-            physical_signaling,
-            flags,
-            device_id,
+            expansion_code: id.expansion_code,
+            expanded_device_type: id.expanded_device_type,
+            min_preamble_count: id.min_preamble_count,
+            hart_revision: id.hart_revision,
+            device_revision: id.device_revision,
+            software_revision: id.software_revision,
+            hardware_revision: id.hardware_revision,
+            physical_signaling: id.physical_signaling,
+            flags: id.flags,
+            device_id: id.device_id,
         })
     }
 }

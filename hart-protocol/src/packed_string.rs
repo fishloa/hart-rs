@@ -1,22 +1,22 @@
-/// HART 6-bit packed ASCII string encoding/decoding.
-///
-/// HART uses a 6-bit character encoding where:
-///   code = ascii_char - 0x20   (subtract 0x20 to get 6-bit code)
-///   ascii_char = code + 0x20   (add 0x20 to decode back to ASCII)
-///
-/// Only printable ASCII characters in the range 0x20–0x5F are valid.
-/// Characters outside this range are clamped/masked to fit.
-///
-/// Packing: 4 characters → 3 bytes
-///   byte0 = (c0 << 2) | (c1 >> 4)
-///   byte1 = (c1 << 4) | (c2 >> 2)
-///   byte2 = (c2 << 6) | c3
-///
-/// Unpacking: 3 bytes → 4 characters
-///   c0 = b0 >> 2
-///   c1 = ((b0 & 0x03) << 4) | (b1 >> 4)
-///   c2 = ((b1 & 0x0F) << 2) | (b2 >> 6)
-///   c3 = b2 & 0x3F
+//! HART 6-bit packed ASCII string encoding/decoding.
+//!
+//! HART uses a 6-bit character encoding where:
+//!   code = ascii_char - 0x20   (subtract 0x20 to get 6-bit code)
+//!   ascii_char = code + 0x20   (add 0x20 to decode back to ASCII)
+//!
+//! Only printable ASCII characters in the range 0x20-0x5F are valid.
+//! Characters outside this range are clamped/masked to fit.
+//!
+//! Packing: 4 characters -> 3 bytes
+//!   byte0 = (c0 << 2) | (c1 >> 4)
+//!   byte1 = (c1 << 4) | (c2 >> 2)
+//!   byte2 = (c2 << 6) | c3
+//!
+//! Unpacking: 3 bytes -> 4 characters
+//!   c0 = b0 >> 2
+//!   c1 = ((b0 & 0x03) << 4) | (b1 >> 4)
+//!   c2 = ((b1 & 0x0F) << 2) | (b2 >> 6)
+//!   c3 = b2 & 0x3F
 
 /// Encode `src` ASCII bytes into 6-bit packed form in `dst`.
 ///
@@ -24,7 +24,7 @@
 /// `src` is padded with spaces (0x20) if not a multiple of 4.
 /// Returns the number of bytes written to `dst`.
 pub fn encode_packed(src: &[u8], dst: &mut [u8]) -> usize {
-    let n_groups = (src.len() + 3) / 4;
+    let n_groups = src.len().div_ceil(4);
     let mut written = 0;
     for g in 0..n_groups {
         if written + 3 > dst.len() {
@@ -33,11 +33,26 @@ pub fn encode_packed(src: &[u8], dst: &mut [u8]) -> usize {
         let base = g * 4;
         // Convert ASCII to 6-bit code by subtracting 0x20; clamp to 6 bits
         let c0 = (src.get(base).copied().unwrap_or(b' ').saturating_sub(0x20) & 0x3F) as u16;
-        let c1 = (src.get(base + 1).copied().unwrap_or(b' ').saturating_sub(0x20) & 0x3F) as u16;
-        let c2 = (src.get(base + 2).copied().unwrap_or(b' ').saturating_sub(0x20) & 0x3F) as u16;
-        let c3 = (src.get(base + 3).copied().unwrap_or(b' ').saturating_sub(0x20) & 0x3F) as u16;
+        let c1 = (src
+            .get(base + 1)
+            .copied()
+            .unwrap_or(b' ')
+            .saturating_sub(0x20)
+            & 0x3F) as u16;
+        let c2 = (src
+            .get(base + 2)
+            .copied()
+            .unwrap_or(b' ')
+            .saturating_sub(0x20)
+            & 0x3F) as u16;
+        let c3 = (src
+            .get(base + 3)
+            .copied()
+            .unwrap_or(b' ')
+            .saturating_sub(0x20)
+            & 0x3F) as u16;
 
-        dst[written]     = ((c0 << 2) | (c1 >> 4)) as u8;
+        dst[written] = ((c0 << 2) | (c1 >> 4)) as u8;
         dst[written + 1] = ((c1 << 4) | (c2 >> 2)) as u8;
         dst[written + 2] = ((c2 << 6) | c3) as u8;
         written += 3;
@@ -67,7 +82,7 @@ pub fn decode_packed(src: &[u8], dst: &mut [u8]) -> usize {
         let c3 = b2 & 0x3F;
 
         // Convert 6-bit code back to ASCII by adding 0x20
-        dst[written]     = (c0 as u8) + 0x20;
+        dst[written] = (c0 as u8) + 0x20;
         dst[written + 1] = (c1 as u8) + 0x20;
         dst[written + 2] = (c2 as u8) + 0x20;
         dst[written + 3] = (c3 as u8) + 0x20;
@@ -165,5 +180,87 @@ mod tests {
         let mut encoded = [0u8; 3];
         encode_packed(src, &mut encoded);
         assert_eq!(encoded, [0x00, 0x00, 0x00]);
+    }
+
+    #[test]
+    fn test_encode_empty_input() {
+        let src = b"";
+        let mut encoded = [0xFFu8; 3];
+        let len = encode_packed(src, &mut encoded);
+        assert_eq!(len, 0);
+    }
+
+    #[test]
+    fn test_decode_empty_input() {
+        let src: &[u8] = &[];
+        let mut decoded = [0xFFu8; 4];
+        let len = decode_packed(src, &mut decoded);
+        assert_eq!(len, 0);
+    }
+
+    #[test]
+    fn test_partial_group_1_char() {
+        // "A" -> padded to "A   "
+        let src = b"A";
+        let mut encoded = [0u8; 3];
+        let len = encode_packed(src, &mut encoded);
+        assert_eq!(len, 3);
+        let mut decoded = [0u8; 4];
+        decode_packed(&encoded, &mut decoded);
+        assert_eq!(&decoded, b"A   ");
+    }
+
+    #[test]
+    fn test_partial_group_3_chars() {
+        // "ABC" -> padded to "ABC "
+        let src = b"ABC";
+        let mut encoded = [0u8; 3];
+        let len = encode_packed(src, &mut encoded);
+        assert_eq!(len, 3);
+        let mut decoded = [0u8; 4];
+        decode_packed(&encoded, &mut decoded);
+        assert_eq!(&decoded, b"ABC ");
+    }
+
+    #[test]
+    fn test_5_chars_produces_two_groups() {
+        // "ABCDE" -> 2 groups -> 6 bytes
+        let src = b"ABCDE";
+        let mut encoded = [0u8; 6];
+        let len = encode_packed(src, &mut encoded);
+        assert_eq!(len, 6);
+        let mut decoded = [0u8; 8];
+        decode_packed(&encoded, &mut decoded);
+        assert_eq!(&decoded, b"ABCDE   ");
+    }
+
+    #[test]
+    fn test_32_char_max_tag_roundtrip() {
+        // 32 chars = 8 groups = 24 packed bytes (max HART message)
+        let src = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
+        let mut encoded = [0u8; 24];
+        let len = encode_packed(src, &mut encoded);
+        assert_eq!(len, 24);
+        let mut decoded = [0u8; 32];
+        decode_packed(&encoded, &mut decoded);
+        assert_eq!(&decoded, src);
+    }
+
+    #[test]
+    fn test_dst_too_small_stops_gracefully() {
+        // Source needs 3 bytes for encoding, but dst only has 2
+        let src = b"TEST";
+        let mut encoded = [0u8; 2];
+        let len = encode_packed(src, &mut encoded);
+        assert_eq!(len, 0); // can't fit any group
+    }
+
+    #[test]
+    fn test_decode_incomplete_group_ignored() {
+        // Only 2 bytes: less than a full 3-byte group, so no output
+        let src = [0x00u8, 0x00];
+        let mut decoded = [0xFFu8; 4];
+        let len = decode_packed(&src, &mut decoded);
+        assert_eq!(len, 0);
     }
 }

@@ -1,9 +1,9 @@
-/// Command 1 — Read Primary Variable
+//! Command 1 — Read Primary Variable
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_PRIMARY_VARIABLE;
 use crate::error::{DecodeError, EncodeError};
 use crate::units::UnitCode;
-use super::{CommandRequest, CommandResponse};
 
 /// Command 1 request: no data payload.
 #[derive(Debug, Clone)]

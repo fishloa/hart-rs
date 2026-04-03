@@ -1,11 +1,11 @@
-/// Command 9 — Read Device Variables with Status
+//! Command 9 — Read Device Variables with Status
 
 use heapless::Vec;
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::READ_DEVICE_VARS_WITH_STATUS;
 use crate::error::{DecodeError, EncodeError};
 use crate::units::UnitCode;
-use super::{CommandRequest, CommandResponse};
 
 /// A single device variable entry in a Command 9 response.
 ///
@@ -117,7 +117,7 @@ mod tests {
         let mut data = [0u8; 8];
         data[0] = 0x00; // device_var_code
         data[1] = 0x01; // classification
-        data[2] = 45;   // unit: Meters
+        data[2] = 45; // unit: Meters
         data[3] = value_bytes[0];
         data[4] = value_bytes[1];
         data[5] = value_bytes[2];

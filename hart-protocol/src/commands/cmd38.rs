@@ -1,8 +1,8 @@
-/// Command 38 — Reset Configuration Changed Flag
+//! Command 38 — Reset Configuration Changed Flag
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::RESET_CONFIG_CHANGED;
 use crate::error::{DecodeError, EncodeError};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 38 request: configuration change counter (u16), encoded as 2 bytes big-endian.
 #[derive(Debug, Clone)]
@@ -41,7 +41,9 @@ impl CommandResponse for Cmd38Response {
             return Err(DecodeError::BufferTooShort);
         }
         let configuration_change_counter = ((data[0] as u16) << 8) | (data[1] as u16);
-        Ok(Cmd38Response { configuration_change_counter })
+        Ok(Cmd38Response {
+            configuration_change_counter,
+        })
     }
 }
 
@@ -57,7 +59,9 @@ mod tests {
 
     #[test]
     fn test_cmd38_roundtrip() {
-        let req = Cmd38Request { configuration_change_counter: 0x1234 };
+        let req = Cmd38Request {
+            configuration_change_counter: 0x1234,
+        };
         let mut buf = [0u8; 4];
         let len = req.encode_data(&mut buf).unwrap();
         assert_eq!(len, 2);
@@ -69,7 +73,9 @@ mod tests {
 
     #[test]
     fn test_cmd38_request_buffer_too_small() {
-        let req = Cmd38Request { configuration_change_counter: 0 };
+        let req = Cmd38Request {
+            configuration_change_counter: 0,
+        };
         let mut buf = [0u8; 1]; // too small
         assert_eq!(req.encode_data(&mut buf), Err(EncodeError::BufferTooSmall));
     }
@@ -85,7 +91,9 @@ mod tests {
 
     #[test]
     fn test_cmd38_counter_zero() {
-        let req = Cmd38Request { configuration_change_counter: 0 };
+        let req = Cmd38Request {
+            configuration_change_counter: 0,
+        };
         let mut buf = [0u8; 2];
         let len = req.encode_data(&mut buf).unwrap();
         let resp = Cmd38Response::decode_data(&buf[..len]).unwrap();

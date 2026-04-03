@@ -105,8 +105,7 @@ mod tests {
 
     // Test vector from test_vectors.rs: REQ_CMD0_LONG_PRIMARY
     const REQ_CMD0_LONG_PRIMARY: &[u8] = &[
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0x82, // delimiter: request long
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x82, // delimiter: request long
         0x9A, 0x2B, 0x11, 0x22, 0x33, // long address
         0x00, // command 0
         0x00, // byte count 0
@@ -209,7 +208,14 @@ mod tests {
             poll_address: 0,
         };
         let mut buf = [0u8; 4]; // too small
-        let result = encode_frame(FrameType::Request, &address, 0, &[], MIN_PREAMBLE_COUNT, &mut buf);
+        let result = encode_frame(
+            FrameType::Request,
+            &address,
+            0,
+            &[],
+            MIN_PREAMBLE_COUNT,
+            &mut buf,
+        );
         assert_eq!(result, Err(EncodeError::BufferTooSmall));
     }
 
@@ -222,7 +228,14 @@ mod tests {
         };
         let data = [0u8; 256]; // > MAX_DATA_LENGTH (255)
         let mut buf = [0u8; 512];
-        let result = encode_frame(FrameType::Request, &address, 0, &data, MIN_PREAMBLE_COUNT, &mut buf);
+        let result = encode_frame(
+            FrameType::Request,
+            &address,
+            0,
+            &data,
+            MIN_PREAMBLE_COUNT,
+            &mut buf,
+        );
         assert_eq!(result, Err(EncodeError::DataTooLong));
     }
 
@@ -230,12 +243,8 @@ mod tests {
     fn test_encode_secondary_master_short() {
         // REQ_CMD0_SHORT_SECONDARY from test_vectors.rs
         const REQ_CMD0_SHORT_SECONDARY: &[u8] = &[
-            0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-            0x02,
-            0x00, // secondary master, poll addr 0
-            0x00,
-            0x00,
-            0x02,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x02, 0x00, // secondary master, poll addr 0
+            0x00, 0x00, 0x02,
         ];
         let address = Address::Short {
             master: MasterRole::Secondary,
@@ -253,5 +262,126 @@ mod tests {
         )
         .unwrap();
         assert_eq!(&buf[..len], REQ_CMD0_SHORT_SECONDARY);
+    }
+
+    #[test]
+    fn test_encode_response_short() {
+        let address = Address::Short {
+            master: MasterRole::Primary,
+            burst: false,
+            poll_address: 0,
+        };
+        let mut buf = [0u8; 32];
+        let len = encode_frame(
+            FrameType::Response,
+            &address,
+            0,
+            &[],
+            MIN_PREAMBLE_COUNT,
+            &mut buf,
+        )
+        .unwrap();
+        // Delimiter should be RESPONSE_SHORT = 0x06
+        assert_eq!(buf[5], 0x06);
+        // Verify checksum
+        let expected_cs = buf[5..len - 1].iter().fold(0u8, |acc, &b| acc ^ b);
+        assert_eq!(buf[len - 1], expected_cs);
+    }
+
+    #[test]
+    fn test_encode_response_long() {
+        let address = Address::Long {
+            master: MasterRole::Primary,
+            burst: false,
+            manufacturer_id: 0x1A,
+            device_type: 0x2B,
+            device_id: 0x112233,
+        };
+        let mut buf = [0u8; 64];
+        let len = encode_frame(
+            FrameType::Response,
+            &address,
+            3,
+            &[0x00, 0x00],
+            MIN_PREAMBLE_COUNT,
+            &mut buf,
+        )
+        .unwrap();
+        // Delimiter should be RESPONSE_LONG = 0x86
+        assert_eq!(buf[5], 0x86);
+        // Verify checksum
+        let expected_cs = buf[5..len - 1].iter().fold(0u8, |acc, &b| acc ^ b);
+        assert_eq!(buf[len - 1], expected_cs);
+    }
+
+    #[test]
+    fn test_encode_burst_short() {
+        let address = Address::Short {
+            master: MasterRole::Primary,
+            burst: true,
+            poll_address: 0,
+        };
+        let mut buf = [0u8; 32];
+        let len = encode_frame(
+            FrameType::Burst,
+            &address,
+            1,
+            &[],
+            MIN_PREAMBLE_COUNT,
+            &mut buf,
+        )
+        .unwrap();
+        // Delimiter should be BURST_SHORT = 0x01
+        assert_eq!(buf[5], 0x01);
+        let expected_cs = buf[5..len - 1].iter().fold(0u8, |acc, &b| acc ^ b);
+        assert_eq!(buf[len - 1], expected_cs);
+    }
+
+    #[test]
+    fn test_encode_burst_long() {
+        let address = Address::Long {
+            master: MasterRole::Primary,
+            burst: true,
+            manufacturer_id: 0x1A,
+            device_type: 0x2B,
+            device_id: 0x112233,
+        };
+        let mut buf = [0u8; 64];
+        let len = encode_frame(
+            FrameType::Burst,
+            &address,
+            1,
+            &[],
+            MIN_PREAMBLE_COUNT,
+            &mut buf,
+        )
+        .unwrap();
+        // Delimiter should be BURST_LONG = 0x81
+        assert_eq!(buf[5], 0x81);
+        let expected_cs = buf[5..len - 1].iter().fold(0u8, |acc, &b| acc ^ b);
+        assert_eq!(buf[len - 1], expected_cs);
+    }
+
+    #[test]
+    fn test_encode_max_data_length() {
+        let address = Address::Short {
+            master: MasterRole::Primary,
+            burst: false,
+            poll_address: 0,
+        };
+        let data = [0xAAu8; 255]; // exactly MAX_DATA_LENGTH
+        let mut buf = [0u8; 512];
+        let result = encode_frame(
+            FrameType::Request,
+            &address,
+            0,
+            &data,
+            MIN_PREAMBLE_COUNT,
+            &mut buf,
+        );
+        assert!(result.is_ok());
+        let len = result.unwrap();
+        // 5 preamble + 1 delim + 1 addr + 1 cmd + 1 byte_count + 255 data + 1 checksum = 265
+        assert_eq!(len, 265);
     }
 }

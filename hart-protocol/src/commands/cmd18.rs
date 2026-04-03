@@ -1,9 +1,9 @@
-/// Command 18 — Write Tag, Descriptor, and Date
+//! Command 18 — Write Tag, Descriptor, and Date
 
+use super::{CommandRequest, CommandResponse};
 use crate::consts::commands::WRITE_TAG_DESCRIPTOR_DATE;
 use crate::error::{DecodeError, EncodeError};
 use crate::packed_string::{decode_packed, encode_packed};
-use super::{CommandRequest, CommandResponse};
 
 /// Command 18 request: tag (8 chars), descriptor (16 chars), and date.
 #[derive(Debug, Clone)]
