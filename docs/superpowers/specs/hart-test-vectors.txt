@@ -1,0 +1,296 @@
+================================================================================
+HART Protocol Test Vectors
+Generated using yaq-project/hart-protocol library + manual construction
+================================================================================
+
+Common long address (primary master):   9A2B112233  = 9A 2B 11 22 33
+  manufacturer_id=0x1A (26), device_type=0x2B (43), device_id=0x112233
+  Byte 0: 0x9A = 1_0_011010 (primary=1, burst=0, mfr_id=0x1A)
+
+--------------------------------------------------------------------------------
+CROSS-VALIDATION WITH YAQ LIBRARY
+--------------------------------------------------------------------------------
+yaq calculate_long_address: 1A2B112233
+our  make_long_address:     9A2B112233
+yaq pack_command cmd 0:     FFFFFFFFFF829A2B112233000033
+  preamble:   FF FF FF FF FF
+  delimiter:  82
+  address:    9A 2B 11 22 33
+  command:    00
+  byte_count: 00
+  checksum:   33
+
+NOTE: yaq library's calculate_long_address puts manufacturer_id in bits 39-32
+      then pack_command ORs with 0x80_0000_0000 (sets primary master bit).
+      For manufacturer_id=0x1A: byte0 = 0x1A | 0x80 = 0x9A
+
+================================================================================
+REQUEST FRAMES
+================================================================================
+
+--------------------------------------------------------------------------------
+REQUEST 1: Command 0 (Read Unique Identifier), Short Address 0, Primary Master
+--------------------------------------------------------------------------------
+Hex: FFFFFFFFFF0280000082
+Bytes: FF FF FF FF FF 02 80 00 00 82
+  Preamble (5):  FF FF FF FF FF
+  Delimiter:     0x02  (0x02 = STX, master-to-slave, short frame)
+  Address:       0x80  (primary master=1, burst=0, poll_addr=0)
+  Command:       0x00  (Command 0)
+  Byte Count:    0x00  (0 data bytes)
+  Checksum:      0x82  (XOR of bytes 5..8)
+
+--------------------------------------------------------------------------------
+REQUEST 2: Command 0 (Read Unique Identifier), Short Address 0, Secondary Master
+--------------------------------------------------------------------------------
+Hex: FFFFFFFFFF0200000002
+Bytes: FF FF FF FF FF 02 00 00 00 02
+  Preamble (5):  FF FF FF FF FF
+  Delimiter:     0x02  (0x02 = STX, master-to-slave, short frame)
+  Address:       0x00  (primary master=0, burst=0, poll_addr=0)
+  Command:       0x00  (Command 0)
+  Byte Count:    0x00  (0 data bytes)
+  Checksum:      0x02
+
+--------------------------------------------------------------------------------
+REQUEST 3: Command 0 (Read Unique Identifier), Long Address, Primary Master
+  manufacturer_id=0x1A, device_type=0x2B, device_id=0x112233
+--------------------------------------------------------------------------------
+Hex: FFFFFFFFFF829A2B112233000033
+Bytes: FF FF FF FF FF 82 9A 2B 11 22 33 00 00 33
+  Preamble (5):  FF FF FF FF FF
+  Delimiter:     0x82  (0x82 = STX, master-to-slave, long frame)
+  Address (5):   9A 2B 11 22 33
+    Byte 0: 0x9A = primary=1, burst=0, mfr_id=0x1A
+    Byte 1: 0x2B = device_type=0x2B
+    Bytes 2-4: 11 22 33 = device_id=0x112233
+  Command:       0x00  (Command 0)
+  Byte Count:    0x00  (0 data bytes)
+  Checksum:      0x33
+  YAQ library:   FFFFFFFFFF829A2B112233000033
+  *** MATCH with yaq library ***
+
+--------------------------------------------------------------------------------
+REQUEST 4: Command 1 (Read Primary Variable), Long Address, Primary Master
+--------------------------------------------------------------------------------
+Hex: FFFFFFFFFF829A2B112233010032
+Bytes: FF FF FF FF FF 82 9A 2B 11 22 33 01 00 32
+  Preamble (5):  FF FF FF FF FF
+  Delimiter:     0x82
+  Address (5):   9A 2B 11 22 33
+  Command:       0x01  (Command 1)
+  Byte Count:    0x00
+  Checksum:      0x32
+  YAQ library:   FFFFFFFFFF829A2B112233010032
+
+--------------------------------------------------------------------------------
+REQUEST 5: Command 3 (Read Dynamic Variables & Loop Current), Long Address, Primary Master
+--------------------------------------------------------------------------------
+Hex: FFFFFFFFFF829A2B112233030030
+Bytes: FF FF FF FF FF 82 9A 2B 11 22 33 03 00 30
+  Preamble (5):  FF FF FF FF FF
+  Delimiter:     0x82
+  Address (5):   9A 2B 11 22 33
+  Command:       0x03  (Command 3)
+  Byte Count:    0x00
+  Checksum:      0x30
+  YAQ library:   FFFFFFFFFF829A2B112233030030
+
+--------------------------------------------------------------------------------
+REQUEST 6: Command 48 (Read Additional Transmitter Status), Long Address, Primary Master
+--------------------------------------------------------------------------------
+Hex: FFFFFFFFFF829A2B112233300003
+Bytes: FF FF FF FF FF 82 9A 2B 11 22 33 30 00 03
+  Preamble (5):  FF FF FF FF FF
+  Delimiter:     0x82
+  Address (5):   9A 2B 11 22 33
+  Command:       0x30  (Command 48 = 0x30)
+  Byte Count:    0x00
+  Checksum:      0x03
+  YAQ library:   FFFFFFFFFF829A2B112233300003
+
+================================================================================
+RESPONSE FRAMES
+================================================================================
+
+--------------------------------------------------------------------------------
+RESPONSE 1: Command 0 (Read Unique Identifier) Response, Long Address
+  expansion_code=0xFE, expanded_device_type=0x002B, min_preambles=5,
+  hart_revision=7, device_revision=1, sw_revision=3, hw_revision=4,
+  signaling=0, flags=0, device_id=0x112233
+--------------------------------------------------------------------------------
+Hex: FFFFFFFFFF869A2B112233000E0000FE1A2B050701030400112233F2
+Bytes: FF FF FF FF FF 86 9A 2B 11 22 33 00 0E 00 00 FE 1A 2B 05 07 01 03 04 00 11 22 33 F2
+  Preamble (5):  FF FF FF FF FF
+  Delimiter:     0x86  (0x86 = ACK, slave-to-master, long frame)
+  Address (5):   9A 2B 11 22 33
+  Command:       0x00  (Command 0)
+  Byte Count:    0x0E  (14 bytes = 2 status + 12 data)
+  Status:        00 00  (no errors)
+  Data (12 bytes): FE 1A 2B 05 07 01 03 04 00 11 22 33
+    expansion_code:     0xFE (254)
+    manufacturer_id:    0x1A (26)
+    device_type:        0x2B (43)
+    min_preambles:      0x05 (5)
+    hart_revision:      0x07 (7)
+    device_revision:    0x01 (1)
+    sw_revision:        0x03 (3)
+    hw_revision:        0x04 (4)
+    flags:              0x00 (0)
+    device_id:          11 22 33 (0x112233)
+  Checksum:      0xF2
+
+--------------------------------------------------------------------------------
+RESPONSE 2: Command 1 (Read Primary Variable) Response
+  unit=meters(45), value=3.14
+--------------------------------------------------------------------------------
+  Float encoding: 3.14 -> 4048F5C3 (IEEE 754 big-endian)
+Hex: FFFFFFFFFF869A2B112233010700002D4048F5C322
+Bytes: FF FF FF FF FF 86 9A 2B 11 22 33 01 07 00 00 2D 40 48 F5 C3 22
+  Preamble (5):  FF FF FF FF FF
+  Delimiter:     0x86
+  Address (5):   9A 2B 11 22 33
+  Command:       0x01  (Command 1)
+  Byte Count:    0x07  (7 bytes = 2 status + 5 data)
+  Status:        00 00
+  Data (5 bytes): 2D 40 48 F5 C3
+    pv_unit:  0x2D (45 = meters)
+    pv_value: 40 48 F5 C3 (3.14)
+  Checksum:      0x22
+
+--------------------------------------------------------------------------------
+RESPONSE 3: Command 2 (Read Loop Current and Percent of Range) Response
+  current=12.5 mA, percent=53.125%
+--------------------------------------------------------------------------------
+  Float encoding: 12.5 -> 41480000
+  Float encoding: 53.125 -> 42548000
+Hex: FFFFFFFFFF869A2B112233020A00004148000042548000A0
+Bytes: FF FF FF FF FF 86 9A 2B 11 22 33 02 0A 00 00 41 48 00 00 42 54 80 00 A0
+  Preamble (5):  FF FF FF FF FF
+  Delimiter:     0x86
+  Address (5):   9A 2B 11 22 33
+  Command:       0x02  (Command 2)
+  Byte Count:    0x0A  (10 bytes = 2 status + 8 data)
+  Status:        00 00
+  Data (8 bytes): 41 48 00 00 42 54 80 00
+    current:  41 48 00 00 (12.5 mA)
+    percent:  42 54 80 00 (53.125%)
+  Checksum:      0xA0
+
+--------------------------------------------------------------------------------
+RESPONSE 4: Command 3 (Read Dynamic Variables and Loop Current) Response
+  current=12.5mA
+  PV: unit=percent(57), value=53.125
+  SV: unit=meters(45), value=2.5
+  TV: unit=not_used(250), value=NaN
+  QV: unit=celsius(32), value=25.3
+--------------------------------------------------------------------------------
+  Float encodings:
+    12.5   -> 41480000
+    53.125 -> 42548000
+    2.5    -> 40200000
+    NaN    -> 7FC00000
+    25.3   -> 41CA6666
+Hex: FFFFFFFFFF869A2B112233031A00004148000039425480002D40200000FA7FC000002041CA66662B
+Bytes: FF FF FF FF FF 86 9A 2B 11 22 33 03 1A 00 00 41 48 00 00 39 42 54 80 00 2D 40 20 00 00 FA 7F C0 00 00 20 41 CA 66 66 2B
+  Preamble (5):  FF FF FF FF FF
+  Delimiter:     0x86
+  Address (5):   9A 2B 11 22 33
+  Command:       0x03  (Command 3)
+  Byte Count:    0x1A  (26 bytes = 2 status + 24 data)
+  Status:        00 00
+  Data (24 bytes): 41 48 00 00 39 42 54 80 00 2D 40 20 00 00 FA 7F C0 00 00 20 41 CA 66 66
+    current:       41 48 00 00 (12.5 mA)
+    pv_unit:       0x39 (57 = percent)
+    pv_value:      42 54 80 00 (53.125)
+    sv_unit:       0x2D (45 = meters)
+    sv_value:      40 20 00 00 (2.5)
+    tv_unit:       0xFA (250 = not_used)
+    tv_value:      7F C0 00 00 (NaN)
+    qv_unit:       0x20 (32 = celsius)
+    qv_value:      41 CA 66 66 (25.3)
+  Checksum:      0x2B
+
+--------------------------------------------------------------------------------
+RESPONSE 5: Command 48 (Read Additional Transmitter Status) Response
+  device_specific_status = [0x00, 0x01, 0x02, 0x03, 0x04]
+--------------------------------------------------------------------------------
+Hex: FFFFFFFFFF869A2B11223330070000000102030404
+Bytes: FF FF FF FF FF 86 9A 2B 11 22 33 30 07 00 00 00 01 02 03 04 04
+  Preamble (5):  FF FF FF FF FF
+  Delimiter:     0x86
+  Address (5):   9A 2B 11 22 33
+  Command:       0x30  (Command 48 = 0x30)
+  Byte Count:    0x07  (7 bytes = 2 status + 5 data)
+  Status:        00 00
+  Data (5 bytes): 00 01 02 03 04
+  Checksum:      0x04
+
+================================================================================
+CHECKSUM VERIFICATION TESTS
+================================================================================
+
+Test 1: XOR of 82 9A 2B 11 22 33 00 00
+  Expected: 0x33
+  Verify:   0x82 ^ 0x9A ^ 0x2B ^ 0x11 ^ 0x22 ^ 0x33 ^ 0x00 ^ 0x00
+  Manual:   0x33
+
+Test 2: Cross-validate with yaq library
+  Frame body: 86 9A 2B 11 22 33 01 07 00 00 2D 40 48 F5 C3
+  Our XOR:    0x22
+  YAQ XOR:    0x22
+  Match:      True
+
+Test 3: Validate complete frame checksum
+  Frame: FF FF FF FF FF 82 9A 2B 11 22 33 00 00 33
+  Body (for checksum): 82 9A 2B 11 22 33 00 00
+  Computed checksum: 0x33
+  Frame checksum:    0x33
+  Valid: True
+
+================================================================================
+COMPACT SUMMARY (for copy-paste into Rust tests)
+================================================================================
+
+// Command 0 request, short addr 0, primary master
+const REQ_CMD0_SHORT_PRIMARY: &[u8] = &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x02, 0x80, 0x00, 0x00, 0x82];
+
+// Command 0 request, short addr 0, secondary master
+const REQ_CMD0_SHORT_SECONDARY: &[u8] = &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x02, 0x00, 0x00, 0x00, 0x02];
+
+// Command 0 request, long addr, primary master
+const REQ_CMD0_LONG_PRIMARY: &[u8] = &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x82, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x00, 0x00, 0x33];
+
+// Command 1 request, long addr, primary master
+const REQ_CMD1_LONG_PRIMARY: &[u8] = &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x82, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x01, 0x00, 0x32];
+
+// Command 3 request, long addr, primary master
+const REQ_CMD3_LONG_PRIMARY: &[u8] = &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x82, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x03, 0x00, 0x30];
+
+// Command 48 request, long addr, primary master
+const REQ_CMD48_LONG_PRIMARY: &[u8] = &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x82, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x30, 0x00, 0x03];
+
+// Command 0 response, long addr
+const RESP_CMD0_LONG: &[u8] = &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x86, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x00, 0x0E, 0x00, 0x00, 0xFE, 0x1A, 0x2B, 0x05, 0x07, 0x01, 0x03, 0x04, 0x00, 0x11, 0x22, 0x33, 0xF2];
+
+// Command 1 response (PV=3.14 meters)
+const RESP_CMD1_LONG: &[u8] = &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x86, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x01, 0x07, 0x00, 0x00, 0x2D, 0x40, 0x48, 0xF5, 0xC3, 0x22];
+
+// Command 2 response (I=12.5mA, %=53.125)
+const RESP_CMD2_LONG: &[u8] = &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x86, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x02, 0x0A, 0x00, 0x00, 0x41, 0x48, 0x00, 0x00, 0x42, 0x54, 0x80, 0x00, 0xA0];
+
+// Command 3 response (4 dynamic vars)
+const RESP_CMD3_LONG: &[u8] = &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x86, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x03, 0x1A, 0x00, 0x00, 0x41, 0x48, 0x00, 0x00, 0x39, 0x42, 0x54, 0x80, 0x00, 0x2D, 0x40, 0x20, 0x00, 0x00, 0xFA, 0x7F, 0xC0, 0x00, 0x00, 0x20, 0x41, 0xCA, 0x66, 0x66, 0x2B];
+
+// Command 48 response (5 status bytes)
+const RESP_CMD48_LONG: &[u8] = &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x86, 0x9A, 0x2B, 0x11, 0x22, 0x33, 0x30, 0x07, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x04];
+
+// IEEE 754 big-endian float reference values
+//       3.14 -> [0x40, 0x48, 0xF5, 0xC3]
+//       12.5 -> [0x41, 0x48, 0x00, 0x00]
+//     53.125 -> [0x42, 0x54, 0x80, 0x00]
+//        2.5 -> [0x40, 0x20, 0x00, 0x00]
+//       25.3 -> [0x41, 0xCA, 0x66, 0x66]
+//        NaN -> [0x7F, 0xC0, 0x00, 0x00]
+//        0.0 -> [0x00, 0x00, 0x00, 0x00]
+//       -1.0 -> [0xBF, 0x80, 0x00, 0x00]
