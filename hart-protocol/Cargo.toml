@@ -1,0 +1,9 @@
+[package]
+name = "hart-protocol"
+version = "0.1.0"
+edition = "2021"
+description = "HART protocol codec for embedded systems"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+heapless = "0.8"

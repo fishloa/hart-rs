@@ -1,0 +1,13 @@
+[package]
+name = "embassy-hart"
+version = "0.1.0"
+edition = "2021"
+description = "Async HART master for Embassy"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+hart-protocol = { path = "../hart-protocol" }
+ad5700 = { path = "../ad5700" }
+embassy-time = "0.4"
+embedded-hal = "1.0"
+embedded-hal-async = "1.0"

@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = [
+    "hart-protocol",
+    "ad5700",
+    "embassy-hart",
+]
