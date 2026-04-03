@@ -39,6 +39,22 @@ embassy-hart           (embassy-time, ad5700, hart-protocol)
 
 **`examples/hart-stm32h7`** — Example firmware for STM32H7 M4 core + AD5700-1 + VEGAPULS 21. Uses Embassy runtime. Not published to crates.io.
 
+## Design Principles
+
+### No Magic Numbers
+
+All protocol constants must be defined as named constants, enums, or derived from typed definitions. No raw integer literals in application code. This applies to:
+
+- **Command numbers**: defined as associated constants on command types (`const COMMAND_NUMBER: u8 = ...`) and as a constants module (e.g., `commands::READ_DEVICE_ID`, `commands::READ_PRIMARY_VARIABLE`)
+- **Delimiter bytes**: `delimiter::REQUEST_SHORT`, `delimiter::REQUEST_LONG`, `delimiter::RESPONSE_SHORT`, etc.
+- **Unit codes**: `UnitCode::Meters`, `UnitCode::DegreesCelsius`, etc. — never raw `45u8` or `32u8`
+- **Status bits**: named bitflags (e.g., `DeviceStatus::MALFUNCTION`, `DeviceStatus::CONFIG_CHANGED`)
+- **Frame sizes**: `MAX_DATA_LENGTH`, `MAX_FRAME_LENGTH`, `PREAMBLE_BYTE`, `MIN_PREAMBLE_COUNT`, `DEFAULT_PREAMBLE_COUNT`
+- **UART config**: `BAUD_RATE`, `RESPONSE_TIMEOUT_MS`, `RTS_HOLD_TIME_MS`
+- **Address masks/shifts**: named constants for bit manipulation in address encoding
+
+All constants live in a `consts` or appropriately named module within `hart-protocol`. Higher-level crates import and re-export as needed. Tests use the same constants — never duplicate literal values.
+
 ## HART Protocol Details
 
 ### Physical Layer
@@ -55,12 +71,12 @@ embassy-hart           (embassy-time, ad5700, hart-protocol)
 ```
 
 - **Preamble**: 5-20 bytes of 0xFF for synchronization
-- **Delimiter**: encodes frame type and addressing mode
-  - 0x02 = Request, short address
-  - 0x82 = Request, long address
-  - 0x06 = Response, short address
-  - 0x86 = Response, long address
-  - 0x01/0x81 = Burst, short/long address
+- **Delimiter**: encodes frame type and addressing mode, defined as constants:
+  - `delimiter::REQUEST_SHORT` (0x02)
+  - `delimiter::REQUEST_LONG` (0x82)
+  - `delimiter::RESPONSE_SHORT` (0x06)
+  - `delimiter::RESPONSE_LONG` (0x86)
+  - `delimiter::BURST_SHORT` / `delimiter::BURST_LONG` (0x01 / 0x81)
 - **Address**: 1 byte (short) or 5 bytes (long). Contains master role bit, burst bit, and device address.
 - **Command**: 1 byte command number
 - **Byte Count**: length of data field
@@ -195,14 +211,49 @@ trait CommandResponse: Sized {
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError>;
 }
 
+// Command numbers also available as a constants module for use
+// in match arms, logging, etc:
+pub mod commands {
+    pub const READ_DEVICE_ID: u8 = 0;
+    pub const READ_PRIMARY_VARIABLE: u8 = 1;
+    pub const READ_LOOP_CURRENT_PERCENT: u8 = 2;
+    pub const READ_DYNAMIC_VARS: u8 = 3;
+    pub const WRITE_POLLING_ADDRESS: u8 = 6;
+    pub const READ_LOOP_CONFIG: u8 = 7;
+    pub const READ_DYNAMIC_VAR_CLASS: u8 = 8;
+    pub const READ_DEVICE_VARS_WITH_STATUS: u8 = 9;
+    pub const READ_UNIQUE_ID_BY_TAG: u8 = 11;
+    pub const READ_MESSAGE: u8 = 12;
+    pub const READ_TAG_DESCRIPTOR_DATE: u8 = 13;
+    pub const READ_PV_TRANSDUCER_INFO: u8 = 14;
+    pub const READ_DEVICE_INFO: u8 = 15;
+    pub const READ_FINAL_ASSEMBLY_NUMBER: u8 = 16;
+    pub const WRITE_MESSAGE: u8 = 17;
+    pub const WRITE_TAG_DESCRIPTOR_DATE: u8 = 18;
+    pub const WRITE_FINAL_ASSEMBLY_NUMBER: u8 = 19;
+    pub const READ_LONG_TAG: u8 = 20;
+    pub const READ_UNIQUE_ID_BY_LONG_TAG: u8 = 21;
+    pub const WRITE_LONG_TAG: u8 = 22;
+    pub const RESET_CONFIG_CHANGED: u8 = 38;
+    pub const READ_ADDITIONAL_STATUS: u8 = 48;
+}
+
+/// Unit codes — each variant carries its wire value as a constant,
+/// accessible via `UnitCode::as_u8()` / `UnitCode::from_u8()`.
+/// No raw integers in calling code.
 enum UnitCode {
-    Meters,            // 45
-    Millimeters,       // 35
-    Percent,           // 57
-    DegreesCelsius,    // 32
-    Bar,               // 7
+    Meters,            // wire: 45
+    Millimeters,       // wire: 35
+    Percent,           // wire: 57
+    DegreesCelsius,    // wire: 32
+    DegreesFahrenheit, // wire: 33
+    Bar,               // wire: 7
+    Millibar,          // wire: 8
+    KiloPascals,       // wire: 12
+    InchesWaterColumn, // wire: 1
+    Psi,               // wire: 6
     // ... extensible
-    Unknown(u8),
+    Unknown(u8),       // fallback for unrecognized codes
 }
 ```
 
