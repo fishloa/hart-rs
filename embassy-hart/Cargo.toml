@@ -2,12 +2,17 @@
 name = "embassy-hart"
 version = "0.1.0"
 edition = "2021"
-description = "Async HART master for Embassy"
+description = "Async HART master for Embassy — combines AD5700-1 modem driver with hart-protocol codec"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/fishloa/hart-rs"
+homepage = "https://github.com/fishloa/hart-rs"
+keywords = ["hart", "embassy", "async", "embedded", "industrial"]
+categories = ["embedded", "no-std", "asynchronous"]
+readme = "../README.md"
 
 [dependencies]
-hart-protocol = { path = "../hart-protocol" }
-ad5700 = { path = "../ad5700" }
+hart-protocol = { version = "0.1.0", path = "../hart-protocol" }
+ad5700 = { version = "0.1.0", path = "../ad5700" }
 embassy-time = "0.4"
 embedded-hal = "1.0"
 embedded-hal-async = "1.0"
