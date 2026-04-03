@@ -175,8 +175,218 @@ const RESP_CMD48_LONG: &[u8] = &[
 // TESTS: These verify that our Rust encoder/decoder produce byte-identical
 // output to the independently generated vectors above.
 // =========================================================================
-// NOTE: These tests will be uncommented once hart-protocol is implemented.
-// They are kept here as the ground truth source for test data.
-//
-// The implementation plan (docs/superpowers/plans/2026-04-03-hart-rs-phase1.md)
-// references these vectors in Task 12.
+
+use hart_protocol::commands::cmd0::Cmd0Response;
+use hart_protocol::commands::cmd1::{Cmd1Request, Cmd1Response};
+use hart_protocol::commands::cmd2::Cmd2Response;
+use hart_protocol::commands::cmd3::{Cmd3Request, Cmd3Response};
+use hart_protocol::commands::cmd48::{Cmd48Request, Cmd48Response};
+use hart_protocol::commands::{CommandRequest, CommandResponse};
+use hart_protocol::decode::Decoder;
+use hart_protocol::encode::encode_frame;
+use hart_protocol::types::{Address, FrameType, MasterRole};
+use hart_protocol::units::UnitCode;
+use hart_protocol::consts::MIN_PREAMBLE_COUNT;
+
+fn feed_all(decoder: &mut Decoder, bytes: &[u8]) -> Option<hart_protocol::decode::RawFrame> {
+    for &b in bytes {
+        match decoder.feed(b) {
+            Ok(Some(frame)) => return Some(frame),
+            Ok(None) => {}
+            Err(e) => panic!("decode error: {:?}", e),
+        }
+    }
+    None
+}
+
+// ---- Encoder test vectors ----
+
+#[test]
+fn test_vector_req_cmd0_short_primary() {
+    let addr = Address::Short {
+        master: MasterRole::Primary,
+        burst: false,
+        poll_address: 0,
+    };
+    let mut buf = [0u8; 32];
+    let len = encode_frame(FrameType::Request, &addr, 0, &[], MIN_PREAMBLE_COUNT, &mut buf).unwrap();
+    assert_eq!(&buf[..len], REQ_CMD0_SHORT_PRIMARY);
+}
+
+#[test]
+fn test_vector_req_cmd0_short_secondary() {
+    let addr = Address::Short {
+        master: MasterRole::Secondary,
+        burst: false,
+        poll_address: 0,
+    };
+    let mut buf = [0u8; 32];
+    let len = encode_frame(FrameType::Request, &addr, 0, &[], MIN_PREAMBLE_COUNT, &mut buf).unwrap();
+    assert_eq!(&buf[..len], REQ_CMD0_SHORT_SECONDARY);
+}
+
+#[test]
+fn test_vector_req_cmd0_long_primary() {
+    let addr = Address::Long {
+        master: MasterRole::Primary,
+        burst: false,
+        manufacturer_id: 0x1A,
+        device_type: 0x2B,
+        device_id: 0x112233,
+    };
+    let mut buf = [0u8; 32];
+    let len = encode_frame(FrameType::Request, &addr, 0, &[], MIN_PREAMBLE_COUNT, &mut buf).unwrap();
+    assert_eq!(&buf[..len], REQ_CMD0_LONG_PRIMARY);
+}
+
+#[test]
+fn test_vector_req_cmd1_long_primary() {
+    let addr = Address::Long {
+        master: MasterRole::Primary,
+        burst: false,
+        manufacturer_id: 0x1A,
+        device_type: 0x2B,
+        device_id: 0x112233,
+    };
+    let req = Cmd1Request;
+    let mut data_buf = [0u8; 4];
+    let data_len = req.encode_data(&mut data_buf).unwrap();
+    let mut frame_buf = [0u8; 32];
+    let len = encode_frame(
+        FrameType::Request,
+        &addr,
+        Cmd1Request::COMMAND_NUMBER,
+        &data_buf[..data_len],
+        MIN_PREAMBLE_COUNT,
+        &mut frame_buf,
+    ).unwrap();
+    assert_eq!(&frame_buf[..len], REQ_CMD1_LONG_PRIMARY);
+}
+
+#[test]
+fn test_vector_req_cmd3_long_primary() {
+    let addr = Address::Long {
+        master: MasterRole::Primary,
+        burst: false,
+        manufacturer_id: 0x1A,
+        device_type: 0x2B,
+        device_id: 0x112233,
+    };
+    let req = Cmd3Request;
+    let mut data_buf = [0u8; 4];
+    let data_len = req.encode_data(&mut data_buf).unwrap();
+    let mut frame_buf = [0u8; 32];
+    let len = encode_frame(
+        FrameType::Request,
+        &addr,
+        Cmd3Request::COMMAND_NUMBER,
+        &data_buf[..data_len],
+        MIN_PREAMBLE_COUNT,
+        &mut frame_buf,
+    ).unwrap();
+    assert_eq!(&frame_buf[..len], REQ_CMD3_LONG_PRIMARY);
+}
+
+#[test]
+fn test_vector_req_cmd48_long_primary() {
+    let addr = Address::Long {
+        master: MasterRole::Primary,
+        burst: false,
+        manufacturer_id: 0x1A,
+        device_type: 0x2B,
+        device_id: 0x112233,
+    };
+    let req = Cmd48Request;
+    let mut data_buf = [0u8; 4];
+    let data_len = req.encode_data(&mut data_buf).unwrap();
+    let mut frame_buf = [0u8; 32];
+    let len = encode_frame(
+        FrameType::Request,
+        &addr,
+        Cmd48Request::COMMAND_NUMBER,
+        &data_buf[..data_len],
+        MIN_PREAMBLE_COUNT,
+        &mut frame_buf,
+    ).unwrap();
+    assert_eq!(&frame_buf[..len], REQ_CMD48_LONG_PRIMARY);
+}
+
+// ---- Decoder test vectors ----
+
+#[test]
+fn test_vector_decode_resp_cmd0_long() {
+    let mut dec = Decoder::new();
+    let frame = feed_all(&mut dec, RESP_CMD0_LONG).unwrap();
+    assert_eq!(frame.command, 0);
+    assert_eq!(frame.frame_type, hart_protocol::types::FrameType::Response);
+    // byte_count = 0x0E = 14, so data.len() = 14 (2 status + 12 payload)
+    assert_eq!(frame.data.len(), 14);
+    // Strip 2 status bytes and decode
+    let resp = Cmd0Response::decode_data(&frame.data[2..]).unwrap();
+    assert_eq!(resp.expansion_code, 0xFE);
+    assert_eq!(resp.expanded_device_type, 0x1A2B);
+    assert_eq!(resp.min_preamble_count, 5);
+    assert_eq!(resp.hart_revision, 7);
+    assert_eq!(resp.device_revision, 1);
+    assert_eq!(resp.software_revision, 3);
+    assert_eq!(resp.hardware_revision, 0); // 0x04 >> 3 = 0
+    assert_eq!(resp.physical_signaling, 4); // 0x04 & 0x07 = 4
+    assert_eq!(resp.flags, 0);
+    assert_eq!(resp.device_id, 0x112233);
+}
+
+#[test]
+fn test_vector_decode_resp_cmd1_long() {
+    let mut dec = Decoder::new();
+    let frame = feed_all(&mut dec, RESP_CMD1_LONG).unwrap();
+    assert_eq!(frame.command, 1);
+    // byte_count = 0x07 = 7, data.len() = 7
+    assert_eq!(frame.data.len(), 7);
+    let resp = Cmd1Response::decode_data(&frame.data[2..]).unwrap();
+    assert_eq!(resp.unit, UnitCode::Meters);
+    let expected = f32::from_be_bytes([0x40, 0x48, 0xF5, 0xC3]);
+    assert_eq!(resp.value, expected);
+}
+
+#[test]
+fn test_vector_decode_resp_cmd2_long() {
+    let mut dec = Decoder::new();
+    let frame = feed_all(&mut dec, RESP_CMD2_LONG).unwrap();
+    assert_eq!(frame.command, 2);
+    // byte_count = 0x0A = 10
+    assert_eq!(frame.data.len(), 10);
+    let resp = Cmd2Response::decode_data(&frame.data[2..]).unwrap();
+    assert_eq!(resp.current_ma, 12.5f32);
+    assert_eq!(resp.percent_of_range, 53.125f32);
+}
+
+#[test]
+fn test_vector_decode_resp_cmd3_long() {
+    let mut dec = Decoder::new();
+    let frame = feed_all(&mut dec, RESP_CMD3_LONG).unwrap();
+    assert_eq!(frame.command, 3);
+    // byte_count = 0x1A = 26
+    assert_eq!(frame.data.len(), 26);
+    let resp = Cmd3Response::decode_data(&frame.data[2..]).unwrap();
+    assert_eq!(resp.loop_current_ma, 12.5f32);
+    assert_eq!(resp.pv_unit, UnitCode::Percent);
+    assert_eq!(resp.pv, 53.125f32);
+    assert_eq!(resp.sv_unit, UnitCode::Meters);
+    assert_eq!(resp.sv, 2.5f32);
+    assert_eq!(resp.tv_unit, UnitCode::NotUsed);
+    assert!(resp.tv.is_nan());
+    assert_eq!(resp.qv_unit, UnitCode::DegreesCelsius);
+    let expected_qv = f32::from_be_bytes([0x41, 0xCA, 0x66, 0x66]);
+    assert_eq!(resp.qv, expected_qv);
+}
+
+#[test]
+fn test_vector_decode_resp_cmd48_long() {
+    let mut dec = Decoder::new();
+    let frame = feed_all(&mut dec, RESP_CMD48_LONG).unwrap();
+    assert_eq!(frame.command, 0x30); // 48 = 0x30
+    // byte_count = 0x07 = 7
+    assert_eq!(frame.data.len(), 7);
+    let resp = Cmd48Response::decode_data(&frame.data[2..]).unwrap();
+    assert_eq!(resp.data.as_slice(), &[0x00, 0x01, 0x02, 0x03, 0x04]);
+}
