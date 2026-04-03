@@ -1,11 +1,11 @@
 [package]
 name = "embassy-hart"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
 description = "Async HART master for Embassy — combines AD5700-1 modem driver with hart-protocol codec"
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/fishloa/hart-rs"
-homepage = "https://github.com/fishloa/hart-rs"
 keywords = ["hart", "embassy", "async", "embedded", "industrial"]
 categories = ["embedded", "no-std", "asynchronous"]
 readme = "../README.md"

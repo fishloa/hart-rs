@@ -1,11 +1,11 @@
 [package]
 name = "ad5700"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
 description = "AD5700-1 HART modem driver for embedded-hal with blocking and async support"
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/fishloa/hart-rs"
-homepage = "https://github.com/fishloa/hart-rs"
 keywords = ["hart", "ad5700", "modem", "embedded", "embedded-hal"]
 categories = ["embedded", "no-std", "hardware-support"]
 readme = "../README.md"

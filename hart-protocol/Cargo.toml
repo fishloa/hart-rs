@@ -1,11 +1,11 @@
 [package]
 name = "hart-protocol"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
 description = "no_std HART protocol codec for embedded systems — frame encoding/decoding, typed commands, engineering unit codes"
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/fishloa/hart-rs"
-homepage = "https://github.com/fishloa/hart-rs"
 keywords = ["hart", "protocol", "embedded", "no-std", "industrial"]
 categories = ["embedded", "no-std", "encoding"]
 readme = "../README.md"

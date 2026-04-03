@@ -5,4 +5,7 @@
 
 #![no_std]
 
+/// The version of this crate, set at compile time from Cargo.toml.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub mod master;

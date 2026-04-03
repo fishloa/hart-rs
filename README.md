@@ -136,6 +136,17 @@ This stack is designed for the **STM32H7** microcontroller paired with the
 depend on `embedded-hal` and `Embassy` respectively, keeping the codec
 (`hart-protocol`) portable to any platform.
 
+## Releasing
+
+1. Update version in root `Cargo.toml` (`[workspace.package] version = "X.Y.Z"`)
+2. Commit: `release: vX.Y.Z`
+3. Tag: `git tag vX.Y.Z`
+4. Push: `git push && git push --tags`
+
+CI will verify tests pass, check the tag matches Cargo.toml, and publish all crates to crates.io in dependency order.
+
+Requires `CARGO_REGISTRY_TOKEN` secret in GitHub repository settings.
+
 ## License
 
 Licensed under either of:
