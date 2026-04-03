@@ -11,3 +11,5 @@ ad5700 = { path = "../ad5700" }
 embassy-time = "0.4"
 embedded-hal = "1.0"
 embedded-hal-async = "1.0"
+embedded-io = "0.7"
+embedded-io-async = "0.7"
