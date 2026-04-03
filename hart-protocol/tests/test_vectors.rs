@@ -145,11 +145,11 @@ const RESP_CMD48_LONG: &[u8] = &[
 // output to the independently generated vectors above.
 // =========================================================================
 
-use hart_protocol::commands::read_device_id::Cmd0Response;
-use hart_protocol::commands::read_primary_variable::{Cmd1Request, Cmd1Response};
-use hart_protocol::commands::read_loop_current::Cmd2Response;
-use hart_protocol::commands::read_dynamic_vars::{Cmd3Request, Cmd3Response};
 use hart_protocol::commands::read_additional_status::{Cmd48Request, Cmd48Response};
+use hart_protocol::commands::read_device_id::Cmd0Response;
+use hart_protocol::commands::read_dynamic_vars::{Cmd3Request, Cmd3Response};
+use hart_protocol::commands::read_loop_current::Cmd2Response;
+use hart_protocol::commands::read_primary_variable::{Cmd1Request, Cmd1Response};
 use hart_protocol::commands::{CommandRequest, CommandResponse};
 use hart_protocol::consts::MIN_PREAMBLE_COUNT;
 use hart_protocol::decode::Decoder;

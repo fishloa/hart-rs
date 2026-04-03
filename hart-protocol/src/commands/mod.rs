@@ -1,26 +1,26 @@
 use crate::error::{DecodeError, EncodeError};
 
-pub mod read_device_id;
-pub mod read_primary_variable;
-pub mod read_loop_current;
-pub mod read_dynamic_vars;
-pub mod write_polling_address;
-pub mod read_loop_config;
-pub mod read_dynamic_var_class;
-pub mod read_device_vars;
-pub mod read_unique_id_by_tag;
-pub mod read_message;
-pub mod read_tag_descriptor_date;
-pub mod read_pv_transducer_info;
-pub mod read_device_info;
-pub mod read_final_assembly;
-pub mod write_message;
-pub mod write_tag_descriptor_date;
-pub mod write_final_assembly;
-pub mod read_long_tag;
-pub mod write_long_tag;
-pub mod reset_config_changed;
 pub mod read_additional_status;
+pub mod read_device_id;
+pub mod read_device_info;
+pub mod read_device_vars;
+pub mod read_dynamic_var_class;
+pub mod read_dynamic_vars;
+pub mod read_final_assembly;
+pub mod read_long_tag;
+pub mod read_loop_config;
+pub mod read_loop_current;
+pub mod read_message;
+pub mod read_primary_variable;
+pub mod read_pv_transducer_info;
+pub mod read_tag_descriptor_date;
+pub mod read_unique_id_by_tag;
+pub mod reset_config_changed;
+pub mod write_final_assembly;
+pub mod write_long_tag;
+pub mod write_message;
+pub mod write_polling_address;
+pub mod write_tag_descriptor_date;
 
 /// Trait for HART command requests.
 pub trait CommandRequest {
