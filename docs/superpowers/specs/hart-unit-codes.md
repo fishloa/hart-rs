@@ -10,8 +10,11 @@ Device Variable Classification (see bottom of this document).
 ## Sources
 
 - Siemens SITRANS LT500 HART Device Specification (A5E50170584A, Rev 1, Oct 2020)
+- ABB TRIO-MASS Massmeter MC2 HART Protocol (D184B108U08)
 - UE One Series 1XTX HART Command Details (1XTX_HARTCMD-01)
 - Krohne IFC010 HART Command Specification (Rev 1.0, May 1997)
+- jszumigaj/hart Go library (univrsl/units.go)
+- FieldComm Group HART-IP Developer Kit flow device spec
 
 ---
 
@@ -37,7 +40,10 @@ These codes have the same meaning regardless of Device Variable Classification.
 | 12 | kilopascal (kPa) |
 | 13 | torr |
 | 14 | atmospheres (atm) |
+| 145 | inches of water at 60 deg F (inH2O@60F) |
 | 237 | megapascal (MPa) |
+| 238 | inches of water at 4 deg C (inH2O@4C) |
+| 239 | millimeters of water at 4 deg C (mmH2O@4C) |
 
 ### Volumetric Flow (Device Variable Classification 66, Table 2.66)
 
@@ -78,12 +84,13 @@ These codes have the same meaning regardless of Device Variable Classification.
 | 34 | degrees Rankine |
 | 35 | Kelvin |
 
-### Electrical (misc)
+### Electrical
 
 | Code | Unit |
 |------|------|
 | 36 | millivolts (mV) |
-| 37 | ohms |
+| 37 | volts (V) |
+| 38 | ohms |
 | 39 | milliamperes (mA) |
 
 ### Volume (Device Variable Classification 68, Table 2.68)
@@ -120,6 +127,48 @@ These codes have the same meaning regardless of Device Variable Classification.
 | 51 | seconds |
 | 52 | hours |
 | 53 | days |
+
+### Mass (Device Variable Classification 71, Table 2.71)
+
+| Code | Unit |
+|------|------|
+| 60 | grams (g) |
+| 61 | kilograms (kg) |
+| 62 | metric tons (t) |
+| 63 | pounds (lb) |
+
+### Mass Flow (Device Variable Classification 72, Table 2.67)
+
+| Code | Unit |
+|------|------|
+| 70 | grams per second (g/s) |
+| 71 | grams per minute (g/min) |
+| 72 | grams per hour (g/h) |
+| 73 | kilograms per second (kg/s) |
+| 74 | kilograms per minute (kg/min) |
+| 75 | kilograms per hour (kg/h) |
+| 76 | kilograms per day (kg/d) |
+| 77 | metric tons per minute (t/min) |
+| 78 | metric tons per hour (t/h) |
+| 79 | metric tons per day (t/d) |
+| 80 | pounds per second (lb/s) |
+| 81 | pounds per minute (lb/min) |
+| 82 | pounds per hour (lb/h) |
+| 83 | pounds per day (lb/d) |
+| 84 | short tons per minute (ton/min) |
+| 85 | short tons per hour (ton/h) |
+
+### Density (Device Variable Classification 73, Table 2.72)
+
+| Code | Unit |
+|------|------|
+| 91 | grams per cubic centimeter (g/cm3) |
+| 92 | kilograms per cubic meter (kg/m3) |
+| 93 | pounds per US gallon (lb/ugl) |
+| 94 | pounds per cubic foot (lb/ft3) |
+| 95 | grams per milliliter (g/ml) |
+| 96 | kilograms per liter (kg/l) |
+| 97 | grams per liter (g/l) |
 
 ### Percent / Dimensionless
 
@@ -170,6 +219,27 @@ The device's classification (reported in Command 8 response) determines the inte
 | 171 | microseconds |
 | 172 | nanoseconds |
 
+### When Classification = Mass Flow (72)
+
+| Code | Unit |
+|------|------|
+| 240 | programmable unit/s |
+| 241 | programmable unit/min |
+| 242 | programmable unit/h |
+| 243 | programmable unit/d |
+
+### When Classification = Mass (71)
+
+| Code | Unit |
+|------|------|
+| 244 | programmable unit |
+
+### When Classification = Volume (68, continued)
+
+| Code | Unit |
+|------|------|
+| 249 | programmable unit |
+
 ### When Classification = Current (84)
 
 | Code | Unit |
@@ -210,10 +280,11 @@ The device's classification (reported in Command 8 response) determines the inte
 
 ## Notes
 
-- This is a best-effort compilation from publicly available device specifications.
-  It does NOT cover all ~250 defined codes in HCF_SPEC-183.
-- Missing categories include: mass, mass flow, density, viscosity, velocity, force,
-  power, energy, torque, voltage, frequency, and analytical.
+- This compilation covers ~150 unique codes from publicly available device specifications.
+- Still missing categories: viscosity, velocity, force, power, energy, torque,
+  voltage, frequency, angular velocity, area, and analytical.
 - The `Unknown(u8)` variant in the Rust enum handles any code not explicitly listed.
 - If you have access to HCF_SPEC-183, the enum should be updated to include all codes.
 - Unit codes are the same across all HART protocol versions (5, 6, 7).
+- Codes 240-249 are reserved for manufacturer-defined / programmable units.
+- Codes 254-255 are reserved by HCF.
