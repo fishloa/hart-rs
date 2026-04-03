@@ -26,8 +26,8 @@ use panic_probe as _;
 
 use ad5700::asynch::Ad5700Async;
 use embassy_hart::master::HartMaster;
-use hart_protocol::commands::read_device_id::{Cmd0Request, Cmd0Response};
-use hart_protocol::commands::read_dynamic_vars::{Cmd3Request, Cmd3Response};
+use hart_protocol::commands::read_device_id::{ReadDeviceIdRequest, ReadDeviceIdResponse};
+use hart_protocol::commands::read_dynamic_vars::{ReadDynamicVarsRequest, ReadDynamicVarsResponse};
 use hart_protocol::types::{Address, MasterRole};
 
 // ---------------------------------------------------------------------------
@@ -114,7 +114,7 @@ async fn main(_spawner: Spawner) {
         // Discovers the device and retrieves firmware/hardware revisions plus
         // the minimum preamble count the device requires.
         // -------------------------------------------------------------------
-        match master.send_command::<Cmd0Request, Cmd0Response>(&addr, &Cmd0Request).await {
+        match master.send_command::<ReadDeviceIdRequest, ReadDeviceIdResponse>(&addr, &ReadDeviceIdRequest).await {
             Ok((status, resp)) => {
                 if status.has_error() {
                     warn!("Cmd0 comm error: status={:#04x} {:#04x}", status.byte0, status.byte1);
@@ -142,7 +142,7 @@ async fn main(_spawner: Spawner) {
         // Command 3 — Read Dynamic Variables and Loop Current
         // Returns PV (level %), SV (distance m), TV (unused), QV (temp °C).
         // -------------------------------------------------------------------
-        match master.send_command::<Cmd3Request, Cmd3Response>(&addr, &Cmd3Request).await {
+        match master.send_command::<ReadDynamicVarsRequest, ReadDynamicVarsResponse>(&addr, &ReadDynamicVarsRequest).await {
             Ok((status, resp)) => {
                 if status.has_error() {
                     warn!("Cmd3 comm error: status={:#04x} {:#04x}", status.byte0, status.byte1);

@@ -26,17 +26,17 @@ pub struct DeviceVariable {
 
 /// Command 9 request: up to 8 slot codes specifying which variables to read.
 #[derive(Debug, Clone)]
-pub struct Cmd9Request {
+pub struct ReadDeviceVarsRequest {
     pub slot_codes: Vec<u8, 8>,
 }
 
 /// Command 9 response: up to 8 device variables with status.
 #[derive(Debug, Clone)]
-pub struct Cmd9Response {
+pub struct ReadDeviceVarsResponse {
     pub variables: Vec<DeviceVariable, 8>,
 }
 
-impl CommandRequest for Cmd9Request {
+impl CommandRequest for ReadDeviceVarsRequest {
     const COMMAND_NUMBER: u8 = READ_DEVICE_VARS_WITH_STATUS;
 
     fn encode_data(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -51,7 +51,7 @@ impl CommandRequest for Cmd9Request {
     }
 }
 
-impl CommandResponse for Cmd9Response {
+impl CommandResponse for ReadDeviceVarsResponse {
     const COMMAND_NUMBER: u8 = READ_DEVICE_VARS_WITH_STATUS;
 
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
@@ -83,7 +83,7 @@ impl CommandResponse for Cmd9Response {
             });
         }
 
-        Ok(Cmd9Response { variables })
+        Ok(ReadDeviceVarsResponse { variables })
     }
 }
 
@@ -93,8 +93,8 @@ mod tests {
 
     #[test]
     fn test_cmd9_command_number() {
-        assert_eq!(Cmd9Request::COMMAND_NUMBER, 9);
-        assert_eq!(Cmd9Response::COMMAND_NUMBER, 9);
+        assert_eq!(ReadDeviceVarsRequest::COMMAND_NUMBER, 9);
+        assert_eq!(ReadDeviceVarsResponse::COMMAND_NUMBER, 9);
     }
 
     #[test]
@@ -102,7 +102,7 @@ mod tests {
         let mut slot_codes: Vec<u8, 8> = Vec::new();
         let _ = slot_codes.push(0x00);
         let _ = slot_codes.push(0x01);
-        let req = Cmd9Request { slot_codes };
+        let req = ReadDeviceVarsRequest { slot_codes };
         let mut buf = [0u8; 8];
         let len = req.encode_data(&mut buf).unwrap();
         assert_eq!(len, 2);
@@ -124,7 +124,7 @@ mod tests {
         data[6] = value_bytes[3];
         data[7] = 0x00; // status
 
-        let resp = Cmd9Response::decode_data(&data).unwrap();
+        let resp = ReadDeviceVarsResponse::decode_data(&data).unwrap();
         assert_eq!(resp.variables.len(), 1);
         let var = &resp.variables[0];
         assert_eq!(var.device_var_code, 0x00);
@@ -136,7 +136,7 @@ mod tests {
 
     #[test]
     fn test_cmd9_response_decode_empty() {
-        let resp = Cmd9Response::decode_data(&[]).unwrap();
+        let resp = ReadDeviceVarsResponse::decode_data(&[]).unwrap();
         assert_eq!(resp.variables.len(), 0);
     }
 
@@ -146,7 +146,7 @@ mod tests {
         for i in 0..4u8 {
             let _ = slot_codes.push(i);
         }
-        let req = Cmd9Request { slot_codes };
+        let req = ReadDeviceVarsRequest { slot_codes };
         let mut buf = [0u8; 2]; // too small for 4 slots
         assert_eq!(req.encode_data(&mut buf), Err(EncodeError::BufferTooSmall));
     }

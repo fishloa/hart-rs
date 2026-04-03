@@ -145,11 +145,11 @@ const RESP_CMD48_LONG: &[u8] = &[
 // output to the independently generated vectors above.
 // =========================================================================
 
-use hart_protocol::commands::read_additional_status::{Cmd48Request, Cmd48Response};
-use hart_protocol::commands::read_device_id::Cmd0Response;
-use hart_protocol::commands::read_dynamic_vars::{Cmd3Request, Cmd3Response};
-use hart_protocol::commands::read_loop_current::Cmd2Response;
-use hart_protocol::commands::read_primary_variable::{Cmd1Request, Cmd1Response};
+use hart_protocol::commands::read_additional_status::{ReadAdditionalStatusRequest, ReadAdditionalStatusResponse};
+use hart_protocol::commands::read_device_id::ReadDeviceIdResponse;
+use hart_protocol::commands::read_dynamic_vars::{ReadDynamicVarsRequest, ReadDynamicVarsResponse};
+use hart_protocol::commands::read_loop_current::ReadLoopCurrentResponse;
+use hart_protocol::commands::read_primary_variable::{ReadPrimaryVariableRequest, ReadPrimaryVariableResponse};
 use hart_protocol::commands::{CommandRequest, CommandResponse};
 use hart_protocol::consts::MIN_PREAMBLE_COUNT;
 use hart_protocol::decode::Decoder;
@@ -241,14 +241,14 @@ fn test_vector_req_cmd1_long_primary() {
         device_type: 0x2B,
         device_id: 0x112233,
     };
-    let req = Cmd1Request;
+    let req = ReadPrimaryVariableRequest;
     let mut data_buf = [0u8; 4];
     let data_len = req.encode_data(&mut data_buf).unwrap();
     let mut frame_buf = [0u8; 32];
     let len = encode_frame(
         FrameType::Request,
         &addr,
-        Cmd1Request::COMMAND_NUMBER,
+        ReadPrimaryVariableRequest::COMMAND_NUMBER,
         &data_buf[..data_len],
         MIN_PREAMBLE_COUNT,
         &mut frame_buf,
@@ -266,14 +266,14 @@ fn test_vector_req_cmd3_long_primary() {
         device_type: 0x2B,
         device_id: 0x112233,
     };
-    let req = Cmd3Request;
+    let req = ReadDynamicVarsRequest;
     let mut data_buf = [0u8; 4];
     let data_len = req.encode_data(&mut data_buf).unwrap();
     let mut frame_buf = [0u8; 32];
     let len = encode_frame(
         FrameType::Request,
         &addr,
-        Cmd3Request::COMMAND_NUMBER,
+        ReadDynamicVarsRequest::COMMAND_NUMBER,
         &data_buf[..data_len],
         MIN_PREAMBLE_COUNT,
         &mut frame_buf,
@@ -291,14 +291,14 @@ fn test_vector_req_cmd48_long_primary() {
         device_type: 0x2B,
         device_id: 0x112233,
     };
-    let req = Cmd48Request;
+    let req = ReadAdditionalStatusRequest;
     let mut data_buf = [0u8; 4];
     let data_len = req.encode_data(&mut data_buf).unwrap();
     let mut frame_buf = [0u8; 32];
     let len = encode_frame(
         FrameType::Request,
         &addr,
-        Cmd48Request::COMMAND_NUMBER,
+        ReadAdditionalStatusRequest::COMMAND_NUMBER,
         &data_buf[..data_len],
         MIN_PREAMBLE_COUNT,
         &mut frame_buf,
@@ -318,7 +318,7 @@ fn test_vector_decode_resp_cmd0_long() {
     // byte_count = 0x0E = 14, so data.len() = 14 (2 status + 12 payload)
     assert_eq!(frame.data.len(), 14);
     // Strip 2 status bytes and decode
-    let resp = Cmd0Response::decode_data(&frame.data[2..]).unwrap();
+    let resp = ReadDeviceIdResponse::decode_data(&frame.data[2..]).unwrap();
     assert_eq!(resp.expansion_code, 0xFE);
     assert_eq!(resp.expanded_device_type, 0x1A2B);
     assert_eq!(resp.min_preamble_count, 5);
@@ -338,7 +338,7 @@ fn test_vector_decode_resp_cmd1_long() {
     assert_eq!(frame.command, 1);
     // byte_count = 0x07 = 7, data.len() = 7
     assert_eq!(frame.data.len(), 7);
-    let resp = Cmd1Response::decode_data(&frame.data[2..]).unwrap();
+    let resp = ReadPrimaryVariableResponse::decode_data(&frame.data[2..]).unwrap();
     assert_eq!(resp.unit, UnitCode::Meters);
     let expected = f32::from_be_bytes([0x40, 0x48, 0xF5, 0xC3]);
     assert_eq!(resp.value, expected);
@@ -351,7 +351,7 @@ fn test_vector_decode_resp_cmd2_long() {
     assert_eq!(frame.command, 2);
     // byte_count = 0x0A = 10
     assert_eq!(frame.data.len(), 10);
-    let resp = Cmd2Response::decode_data(&frame.data[2..]).unwrap();
+    let resp = ReadLoopCurrentResponse::decode_data(&frame.data[2..]).unwrap();
     assert_eq!(resp.current_ma, 12.5f32);
     assert_eq!(resp.percent_of_range, 53.125f32);
 }
@@ -363,7 +363,7 @@ fn test_vector_decode_resp_cmd3_long() {
     assert_eq!(frame.command, 3);
     // byte_count = 0x1A = 26
     assert_eq!(frame.data.len(), 26);
-    let resp = Cmd3Response::decode_data(&frame.data[2..]).unwrap();
+    let resp = ReadDynamicVarsResponse::decode_data(&frame.data[2..]).unwrap();
     assert_eq!(resp.loop_current_ma, 12.5f32);
     assert_eq!(resp.pv_unit, UnitCode::Percent);
     assert_eq!(resp.pv, 53.125f32);
@@ -383,6 +383,6 @@ fn test_vector_decode_resp_cmd48_long() {
     assert_eq!(frame.command, 0x30); // 48 = 0x30
                                      // byte_count = 0x07 = 7
     assert_eq!(frame.data.len(), 7);
-    let resp = Cmd48Response::decode_data(&frame.data[2..]).unwrap();
+    let resp = ReadAdditionalStatusResponse::decode_data(&frame.data[2..]).unwrap();
     assert_eq!(resp.data.as_slice(), &[0x00, 0x01, 0x02, 0x03, 0x04]);
 }

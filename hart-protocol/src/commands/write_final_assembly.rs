@@ -6,7 +6,7 @@ use crate::error::{DecodeError, EncodeError};
 
 /// Command 19 request: 24-bit final assembly number encoded as 3 bytes big-endian.
 #[derive(Debug, Clone)]
-pub struct Cmd19Request {
+pub struct WriteFinalAssemblyRequest {
     pub final_assembly_number: u32,
 }
 
@@ -15,11 +15,11 @@ pub struct Cmd19Request {
 /// Layout (3 bytes):
 ///   [0..2] final_assembly_number (24-bit big-endian)
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cmd19Response {
+pub struct WriteFinalAssemblyResponse {
     pub final_assembly_number: u32,
 }
 
-impl CommandRequest for Cmd19Request {
+impl CommandRequest for WriteFinalAssemblyRequest {
     const COMMAND_NUMBER: u8 = WRITE_FINAL_ASSEMBLY_NUMBER;
 
     fn encode_data(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -31,7 +31,7 @@ impl CommandRequest for Cmd19Request {
     }
 }
 
-impl CommandResponse for Cmd19Response {
+impl CommandResponse for WriteFinalAssemblyResponse {
     const COMMAND_NUMBER: u8 = WRITE_FINAL_ASSEMBLY_NUMBER;
 
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
@@ -39,7 +39,7 @@ impl CommandResponse for Cmd19Response {
             return Err(DecodeError::BufferTooShort);
         }
         let final_assembly_number = super::decode_u24_be(&data[0..3]);
-        Ok(Cmd19Response {
+        Ok(WriteFinalAssemblyResponse {
             final_assembly_number,
         })
     }
@@ -51,13 +51,13 @@ mod tests {
 
     #[test]
     fn test_cmd19_command_number() {
-        assert_eq!(Cmd19Request::COMMAND_NUMBER, 19);
-        assert_eq!(Cmd19Response::COMMAND_NUMBER, 19);
+        assert_eq!(WriteFinalAssemblyRequest::COMMAND_NUMBER, 19);
+        assert_eq!(WriteFinalAssemblyResponse::COMMAND_NUMBER, 19);
     }
 
     #[test]
     fn test_cmd19_roundtrip() {
-        let req = Cmd19Request {
+        let req = WriteFinalAssemblyRequest {
             final_assembly_number: 0xABCDEF,
         };
         let mut buf = [0u8; 4];
@@ -65,13 +65,13 @@ mod tests {
         assert_eq!(len, 3);
         assert_eq!(&buf[..3], &[0xAB, 0xCD, 0xEF]);
 
-        let resp = Cmd19Response::decode_data(&buf[..3]).unwrap();
+        let resp = WriteFinalAssemblyResponse::decode_data(&buf[..3]).unwrap();
         assert_eq!(resp.final_assembly_number, 0xABCDEF);
     }
 
     #[test]
     fn test_cmd19_request_buffer_too_small() {
-        let req = Cmd19Request {
+        let req = WriteFinalAssemblyRequest {
             final_assembly_number: 1,
         };
         let mut buf = [0u8; 2]; // too small
@@ -82,14 +82,14 @@ mod tests {
     fn test_cmd19_response_too_short() {
         let data = [0x01u8, 0x02]; // needs 3
         assert_eq!(
-            Cmd19Response::decode_data(&data),
+            WriteFinalAssemblyResponse::decode_data(&data),
             Err(DecodeError::BufferTooShort)
         );
     }
 
     #[test]
     fn test_cmd19_encode_zero() {
-        let req = Cmd19Request {
+        let req = WriteFinalAssemblyRequest {
             final_assembly_number: 0,
         };
         let mut buf = [0u8; 3];

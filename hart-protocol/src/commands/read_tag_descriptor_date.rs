@@ -7,7 +7,7 @@ use crate::packed_string::decode_packed;
 
 /// Command 13 request: no data payload.
 #[derive(Debug, Clone)]
-pub struct Cmd13Request;
+pub struct ReadTagDescriptorDateRequest;
 
 /// Command 13 response: tag (8 chars), descriptor (16 chars), and date (day/month/year).
 ///
@@ -18,7 +18,7 @@ pub struct Cmd13Request;
 ///   [19]     month
 ///   [20]     year (years since 1900)
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cmd13Response {
+pub struct ReadTagDescriptorDateResponse {
     pub tag: [u8; 8],
     pub descriptor: [u8; 16],
     pub day: u8,
@@ -26,7 +26,7 @@ pub struct Cmd13Response {
     pub year: u8,
 }
 
-impl CommandRequest for Cmd13Request {
+impl CommandRequest for ReadTagDescriptorDateRequest {
     const COMMAND_NUMBER: u8 = READ_TAG_DESCRIPTOR_DATE;
 
     fn encode_data(&self, _buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -34,7 +34,7 @@ impl CommandRequest for Cmd13Request {
     }
 }
 
-impl CommandResponse for Cmd13Response {
+impl CommandResponse for ReadTagDescriptorDateResponse {
     const COMMAND_NUMBER: u8 = READ_TAG_DESCRIPTOR_DATE;
 
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
@@ -51,7 +51,7 @@ impl CommandResponse for Cmd13Response {
         let month = data[19];
         let year = data[20];
 
-        Ok(Cmd13Response {
+        Ok(ReadTagDescriptorDateResponse {
             tag,
             descriptor,
             day,
@@ -68,13 +68,13 @@ mod tests {
 
     #[test]
     fn test_cmd13_command_number() {
-        assert_eq!(Cmd13Request::COMMAND_NUMBER, 13);
-        assert_eq!(Cmd13Response::COMMAND_NUMBER, 13);
+        assert_eq!(ReadTagDescriptorDateRequest::COMMAND_NUMBER, 13);
+        assert_eq!(ReadTagDescriptorDateResponse::COMMAND_NUMBER, 13);
     }
 
     #[test]
     fn test_cmd13_request_encodes_no_data() {
-        let req = Cmd13Request;
+        let req = ReadTagDescriptorDateRequest;
         let mut buf = [0u8; 4];
         let len = req.encode_data(&mut buf).unwrap();
         assert_eq!(len, 0);
@@ -95,7 +95,7 @@ mod tests {
         data[19] = 6; // month
         data[20] = 123; // year (1900+123 = 2023)
 
-        let resp = Cmd13Response::decode_data(&data).unwrap();
+        let resp = ReadTagDescriptorDateResponse::decode_data(&data).unwrap();
         assert_eq!(&resp.tag, tag_str);
         assert_eq!(&resp.descriptor, desc_str);
         assert_eq!(resp.day, 15);
@@ -107,7 +107,7 @@ mod tests {
     fn test_cmd13_response_too_short() {
         let data = [0u8; 20]; // needs 21
         assert_eq!(
-            Cmd13Response::decode_data(&data),
+            ReadTagDescriptorDateResponse::decode_data(&data),
             Err(DecodeError::BufferTooShort)
         );
     }

@@ -7,7 +7,7 @@ use crate::units::UnitCode;
 
 /// Command 15 request: no data payload.
 #[derive(Debug, Clone)]
-pub struct Cmd15Request;
+pub struct ReadDeviceInfoRequest;
 
 /// Command 15 response: PV range, transfer function, and device info.
 ///
@@ -21,7 +21,7 @@ pub struct Cmd15Request;
 ///   [15]    write_protect_code
 ///   [16]    private_label_distributor_code
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cmd15Response {
+pub struct ReadDeviceInfoResponse {
     pub pv_alarm_selection: u8,
     pub pv_transfer_function: u8,
     pub pv_unit: UnitCode,
@@ -32,7 +32,7 @@ pub struct Cmd15Response {
     pub private_label_distributor: u8,
 }
 
-impl CommandRequest for Cmd15Request {
+impl CommandRequest for ReadDeviceInfoRequest {
     const COMMAND_NUMBER: u8 = READ_DEVICE_INFO;
 
     fn encode_data(&self, _buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -40,7 +40,7 @@ impl CommandRequest for Cmd15Request {
     }
 }
 
-impl CommandResponse for Cmd15Response {
+impl CommandResponse for ReadDeviceInfoResponse {
     const COMMAND_NUMBER: u8 = READ_DEVICE_INFO;
 
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
@@ -56,7 +56,7 @@ impl CommandResponse for Cmd15Response {
         let write_protect = data[15];
         let private_label_distributor = data[16];
 
-        Ok(Cmd15Response {
+        Ok(ReadDeviceInfoResponse {
             pv_alarm_selection,
             pv_transfer_function,
             pv_unit,
@@ -75,13 +75,13 @@ mod tests {
 
     #[test]
     fn test_cmd15_command_number() {
-        assert_eq!(Cmd15Request::COMMAND_NUMBER, 15);
-        assert_eq!(Cmd15Response::COMMAND_NUMBER, 15);
+        assert_eq!(ReadDeviceInfoRequest::COMMAND_NUMBER, 15);
+        assert_eq!(ReadDeviceInfoResponse::COMMAND_NUMBER, 15);
     }
 
     #[test]
     fn test_cmd15_request_encodes_no_data() {
-        let req = Cmd15Request;
+        let req = ReadDeviceInfoRequest;
         let mut buf = [0u8; 4];
         let len = req.encode_data(&mut buf).unwrap();
         assert_eq!(len, 0);
@@ -103,7 +103,7 @@ mod tests {
         data[15] = 0x00; // write protect: not protected
         data[16] = 0x00; // private label distributor: none
 
-        let resp = Cmd15Response::decode_data(&data).unwrap();
+        let resp = ReadDeviceInfoResponse::decode_data(&data).unwrap();
         assert_eq!(resp.pv_alarm_selection, 0);
         assert_eq!(resp.pv_transfer_function, 0);
         assert_eq!(resp.pv_unit, UnitCode::Meters);
@@ -118,7 +118,7 @@ mod tests {
     fn test_cmd15_response_too_short() {
         let data = [0u8; 16]; // needs 17
         assert_eq!(
-            Cmd15Response::decode_data(&data),
+            ReadDeviceInfoResponse::decode_data(&data),
             Err(DecodeError::BufferTooShort)
         );
     }

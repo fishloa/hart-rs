@@ -10,7 +10,7 @@ use crate::error::{DecodeError, EncodeError};
 ///   [0] polling_address
 ///   [1] loop_current_mode
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cmd6Request {
+pub struct WritePollingAddressRequest {
     pub polling_address: u8,
     pub loop_current_mode: u8,
 }
@@ -21,12 +21,12 @@ pub struct Cmd6Request {
 ///   [0] polling_address
 ///   [1] loop_current_mode
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cmd6Response {
+pub struct WritePollingAddressResponse {
     pub polling_address: u8,
     pub loop_current_mode: u8,
 }
 
-impl CommandRequest for Cmd6Request {
+impl CommandRequest for WritePollingAddressRequest {
     const COMMAND_NUMBER: u8 = WRITE_POLLING_ADDRESS;
 
     fn encode_data(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -39,14 +39,14 @@ impl CommandRequest for Cmd6Request {
     }
 }
 
-impl CommandResponse for Cmd6Response {
+impl CommandResponse for WritePollingAddressResponse {
     const COMMAND_NUMBER: u8 = WRITE_POLLING_ADDRESS;
 
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
         if data.len() < 2 {
             return Err(DecodeError::BufferTooShort);
         }
-        Ok(Cmd6Response {
+        Ok(WritePollingAddressResponse {
             polling_address: data[0],
             loop_current_mode: data[1],
         })
@@ -59,13 +59,13 @@ mod tests {
 
     #[test]
     fn test_cmd6_command_number() {
-        assert_eq!(Cmd6Request::COMMAND_NUMBER, 6);
-        assert_eq!(Cmd6Response::COMMAND_NUMBER, 6);
+        assert_eq!(WritePollingAddressRequest::COMMAND_NUMBER, 6);
+        assert_eq!(WritePollingAddressResponse::COMMAND_NUMBER, 6);
     }
 
     #[test]
     fn test_cmd6_request_encode() {
-        let req = Cmd6Request {
+        let req = WritePollingAddressRequest {
             polling_address: 3,
             loop_current_mode: 1,
         };
@@ -78,7 +78,7 @@ mod tests {
 
     #[test]
     fn test_cmd6_request_buffer_too_small() {
-        let req = Cmd6Request {
+        let req = WritePollingAddressRequest {
             polling_address: 0,
             loop_current_mode: 0,
         };
@@ -89,7 +89,7 @@ mod tests {
     #[test]
     fn test_cmd6_response_decode() {
         let data = [0x03u8, 0x01]; // polling_address=3, loop_current_mode=1
-        let resp = Cmd6Response::decode_data(&data).unwrap();
+        let resp = WritePollingAddressResponse::decode_data(&data).unwrap();
         assert_eq!(resp.polling_address, 3);
         assert_eq!(resp.loop_current_mode, 1);
     }
@@ -98,20 +98,20 @@ mod tests {
     fn test_cmd6_response_too_short() {
         let data = [0x03u8]; // needs 2
         assert_eq!(
-            Cmd6Response::decode_data(&data),
+            WritePollingAddressResponse::decode_data(&data),
             Err(DecodeError::BufferTooShort)
         );
     }
 
     #[test]
     fn test_cmd6_roundtrip() {
-        let req = Cmd6Request {
+        let req = WritePollingAddressRequest {
             polling_address: 5,
             loop_current_mode: 0,
         };
         let mut buf = [0u8; 4];
         let len = req.encode_data(&mut buf).unwrap();
-        let resp = Cmd6Response::decode_data(&buf[..len]).unwrap();
+        let resp = WritePollingAddressResponse::decode_data(&buf[..len]).unwrap();
         assert_eq!(resp.polling_address, req.polling_address);
         assert_eq!(resp.loop_current_mode, req.loop_current_mode);
     }

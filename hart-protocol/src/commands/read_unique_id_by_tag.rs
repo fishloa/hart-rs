@@ -7,7 +7,7 @@ use crate::packed_string::{decode_packed, encode_packed};
 
 /// Command 11 request: 8-char tag encoded as 6 packed bytes.
 #[derive(Debug, Clone)]
-pub struct Cmd11Request {
+pub struct ReadUniqueIdByTagRequest {
     /// 8-character ASCII tag (padded with spaces if shorter).
     pub tag: [u8; 8],
 }
@@ -25,7 +25,7 @@ pub struct Cmd11Request {
 ///   [8]     flags
 ///   [9..11] device_id (24-bit big-endian)
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cmd11Response {
+pub struct ReadUniqueIdByTagResponse {
     pub expansion_code: u8,
     pub expanded_device_type: u16,
     pub min_preamble_count: u8,
@@ -38,7 +38,7 @@ pub struct Cmd11Response {
     pub device_id: u32,
 }
 
-impl CommandRequest for Cmd11Request {
+impl CommandRequest for ReadUniqueIdByTagRequest {
     const COMMAND_NUMBER: u8 = READ_UNIQUE_ID_BY_TAG;
 
     fn encode_data(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -50,12 +50,12 @@ impl CommandRequest for Cmd11Request {
     }
 }
 
-impl CommandResponse for Cmd11Response {
+impl CommandResponse for ReadUniqueIdByTagResponse {
     const COMMAND_NUMBER: u8 = READ_UNIQUE_ID_BY_TAG;
 
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
         let id = super::DeviceIdentity::decode(data)?;
-        Ok(Cmd11Response {
+        Ok(ReadUniqueIdByTagResponse {
             expansion_code: id.expansion_code,
             expanded_device_type: id.expanded_device_type,
             min_preamble_count: id.min_preamble_count,
@@ -83,15 +83,15 @@ mod tests {
 
     #[test]
     fn test_cmd11_command_number() {
-        assert_eq!(Cmd11Request::COMMAND_NUMBER, 11);
-        assert_eq!(Cmd11Response::COMMAND_NUMBER, 11);
+        assert_eq!(ReadUniqueIdByTagRequest::COMMAND_NUMBER, 11);
+        assert_eq!(ReadUniqueIdByTagResponse::COMMAND_NUMBER, 11);
     }
 
     #[test]
     fn test_cmd11_request_encode() {
         let mut tag = [b' '; 8];
         tag[..4].copy_from_slice(b"TEST");
-        let req = Cmd11Request { tag };
+        let req = ReadUniqueIdByTagRequest { tag };
         let mut buf = [0u8; 6];
         let len = req.encode_data(&mut buf).unwrap();
         assert_eq!(len, 6);
@@ -103,7 +103,7 @@ mod tests {
 
     #[test]
     fn test_cmd11_request_buffer_too_small() {
-        let req = Cmd11Request { tag: [b' '; 8] };
+        let req = ReadUniqueIdByTagRequest { tag: [b' '; 8] };
         let mut buf = [0u8; 3]; // too small
         assert_eq!(req.encode_data(&mut buf), Err(EncodeError::BufferTooSmall));
     }
@@ -113,7 +113,7 @@ mod tests {
         let data = [
             0xFE, 0x1A, 0x2B, 0x05, 0x07, 0x01, 0x03, 0x04, 0x00, 0x11, 0x22, 0x33,
         ];
-        let resp = Cmd11Response::decode_data(&data).unwrap();
+        let resp = ReadUniqueIdByTagResponse::decode_data(&data).unwrap();
         assert_eq!(resp.expansion_code, 0xFE);
         assert_eq!(resp.expanded_device_type, 0x1A2B);
         assert_eq!(resp.device_id, 0x112233);
@@ -123,7 +123,7 @@ mod tests {
     fn test_cmd11_response_too_short() {
         let data = [0u8; 11];
         assert_eq!(
-            Cmd11Response::decode_data(&data),
+            ReadUniqueIdByTagResponse::decode_data(&data),
             Err(DecodeError::BufferTooShort)
         );
     }

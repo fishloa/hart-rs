@@ -7,7 +7,7 @@ use crate::units::UnitCode;
 
 /// Command 14 request: no data payload.
 #[derive(Debug, Clone)]
-pub struct Cmd14Request;
+pub struct ReadPvTransducerInfoRequest;
 
 /// Command 14 response: transducer serial number, limits, and minimum span.
 ///
@@ -18,7 +18,7 @@ pub struct Cmd14Request;
 ///   [8..11] lower_limit (f32 big-endian)
 ///   [12..15] minimum_span (f32 big-endian)
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cmd14Response {
+pub struct ReadPvTransducerInfoResponse {
     pub transducer_serial: u32,
     pub unit: UnitCode,
     pub upper_limit: f32,
@@ -26,7 +26,7 @@ pub struct Cmd14Response {
     pub minimum_span: f32,
 }
 
-impl CommandRequest for Cmd14Request {
+impl CommandRequest for ReadPvTransducerInfoRequest {
     const COMMAND_NUMBER: u8 = READ_PV_TRANSDUCER_INFO;
 
     fn encode_data(&self, _buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -34,7 +34,7 @@ impl CommandRequest for Cmd14Request {
     }
 }
 
-impl CommandResponse for Cmd14Response {
+impl CommandResponse for ReadPvTransducerInfoResponse {
     const COMMAND_NUMBER: u8 = READ_PV_TRANSDUCER_INFO;
 
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
@@ -47,7 +47,7 @@ impl CommandResponse for Cmd14Response {
         let lower_limit = f32::from_be_bytes([data[8], data[9], data[10], data[11]]);
         let minimum_span = f32::from_be_bytes([data[12], data[13], data[14], data[15]]);
 
-        Ok(Cmd14Response {
+        Ok(ReadPvTransducerInfoResponse {
             transducer_serial,
             unit,
             upper_limit,
@@ -63,13 +63,13 @@ mod tests {
 
     #[test]
     fn test_cmd14_command_number() {
-        assert_eq!(Cmd14Request::COMMAND_NUMBER, 14);
-        assert_eq!(Cmd14Response::COMMAND_NUMBER, 14);
+        assert_eq!(ReadPvTransducerInfoRequest::COMMAND_NUMBER, 14);
+        assert_eq!(ReadPvTransducerInfoResponse::COMMAND_NUMBER, 14);
     }
 
     #[test]
     fn test_cmd14_request_encodes_no_data() {
-        let req = Cmd14Request;
+        let req = ReadPvTransducerInfoRequest;
         let mut buf = [0u8; 4];
         let len = req.encode_data(&mut buf).unwrap();
         assert_eq!(len, 0);
@@ -90,7 +90,7 @@ mod tests {
         data[8..12].copy_from_slice(&lower_bytes);
         data[12..16].copy_from_slice(&span_bytes);
 
-        let resp = Cmd14Response::decode_data(&data).unwrap();
+        let resp = ReadPvTransducerInfoResponse::decode_data(&data).unwrap();
         assert_eq!(resp.transducer_serial, 0x010203);
         assert_eq!(resp.unit, UnitCode::Meters);
         assert_eq!(resp.upper_limit, 10.0f32);
@@ -102,7 +102,7 @@ mod tests {
     fn test_cmd14_response_too_short() {
         let data = [0u8; 15]; // needs 16
         assert_eq!(
-            Cmd14Response::decode_data(&data),
+            ReadPvTransducerInfoResponse::decode_data(&data),
             Err(DecodeError::BufferTooShort)
         );
     }

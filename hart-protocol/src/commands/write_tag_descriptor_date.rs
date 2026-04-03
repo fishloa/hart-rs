@@ -7,7 +7,7 @@ use crate::packed_string::{decode_packed, encode_packed};
 
 /// Command 18 request: tag (8 chars), descriptor (16 chars), and date.
 #[derive(Debug, Clone)]
-pub struct Cmd18Request {
+pub struct WriteTagDescriptorDateRequest {
     /// 8-character ASCII tag.
     pub tag: [u8; 8],
     /// 16-character ASCII descriptor.
@@ -26,7 +26,7 @@ pub struct Cmd18Request {
 ///   [19]     month
 ///   [20]     year
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cmd18Response {
+pub struct WriteTagDescriptorDateResponse {
     pub tag: [u8; 8],
     pub descriptor: [u8; 16],
     pub day: u8,
@@ -34,7 +34,7 @@ pub struct Cmd18Response {
     pub year: u8,
 }
 
-impl CommandRequest for Cmd18Request {
+impl CommandRequest for WriteTagDescriptorDateRequest {
     const COMMAND_NUMBER: u8 = WRITE_TAG_DESCRIPTOR_DATE;
 
     fn encode_data(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -53,7 +53,7 @@ impl CommandRequest for Cmd18Request {
     }
 }
 
-impl CommandResponse for Cmd18Response {
+impl CommandResponse for WriteTagDescriptorDateResponse {
     const COMMAND_NUMBER: u8 = WRITE_TAG_DESCRIPTOR_DATE;
 
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
@@ -70,7 +70,7 @@ impl CommandResponse for Cmd18Response {
         let month = data[19];
         let year = data[20];
 
-        Ok(Cmd18Response {
+        Ok(WriteTagDescriptorDateResponse {
             tag,
             descriptor,
             day,
@@ -86,8 +86,8 @@ mod tests {
 
     #[test]
     fn test_cmd18_command_number() {
-        assert_eq!(Cmd18Request::COMMAND_NUMBER, 18);
-        assert_eq!(Cmd18Response::COMMAND_NUMBER, 18);
+        assert_eq!(WriteTagDescriptorDateRequest::COMMAND_NUMBER, 18);
+        assert_eq!(WriteTagDescriptorDateResponse::COMMAND_NUMBER, 18);
     }
 
     #[test]
@@ -97,7 +97,7 @@ mod tests {
         let mut desc = [b' '; 16];
         desc[..10].copy_from_slice(b"MY SENSOR ");
 
-        let req = Cmd18Request {
+        let req = WriteTagDescriptorDateRequest {
             tag,
             descriptor: desc,
             day: 10,
@@ -109,7 +109,7 @@ mod tests {
         let len = req.encode_data(&mut buf).unwrap();
         assert_eq!(len, 21);
 
-        let resp = Cmd18Response::decode_data(&buf[..len]).unwrap();
+        let resp = WriteTagDescriptorDateResponse::decode_data(&buf[..len]).unwrap();
         assert_eq!(&resp.tag, b"SENSOR01");
         assert_eq!(&resp.descriptor[..10], b"MY SENSOR ");
         assert_eq!(resp.day, 10);
@@ -119,7 +119,7 @@ mod tests {
 
     #[test]
     fn test_cmd18_request_buffer_too_small() {
-        let req = Cmd18Request {
+        let req = WriteTagDescriptorDateRequest {
             tag: [b' '; 8],
             descriptor: [b' '; 16],
             day: 1,
@@ -134,7 +134,7 @@ mod tests {
     fn test_cmd18_response_too_short() {
         let data = [0u8; 20]; // needs 21
         assert_eq!(
-            Cmd18Response::decode_data(&data),
+            WriteTagDescriptorDateResponse::decode_data(&data),
             Err(DecodeError::BufferTooShort)
         );
     }

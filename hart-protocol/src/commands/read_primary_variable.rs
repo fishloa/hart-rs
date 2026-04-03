@@ -7,7 +7,7 @@ use crate::units::UnitCode;
 
 /// Command 1 request: no data payload.
 #[derive(Debug, Clone)]
-pub struct Cmd1Request;
+pub struct ReadPrimaryVariableRequest;
 
 /// Command 1 response: primary variable unit and value.
 ///
@@ -15,12 +15,12 @@ pub struct Cmd1Request;
 ///   [0]    unit code
 ///   [1..4] PV value (f32 big-endian)
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cmd1Response {
+pub struct ReadPrimaryVariableResponse {
     pub unit: UnitCode,
     pub value: f32,
 }
 
-impl CommandRequest for Cmd1Request {
+impl CommandRequest for ReadPrimaryVariableRequest {
     const COMMAND_NUMBER: u8 = READ_PRIMARY_VARIABLE;
 
     fn encode_data(&self, _buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -28,7 +28,7 @@ impl CommandRequest for Cmd1Request {
     }
 }
 
-impl CommandResponse for Cmd1Response {
+impl CommandResponse for ReadPrimaryVariableResponse {
     const COMMAND_NUMBER: u8 = READ_PRIMARY_VARIABLE;
 
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
@@ -37,7 +37,7 @@ impl CommandResponse for Cmd1Response {
         }
         let unit = UnitCode::from_u8(data[0]);
         let value = f32::from_be_bytes([data[1], data[2], data[3], data[4]]);
-        Ok(Cmd1Response { unit, value })
+        Ok(ReadPrimaryVariableResponse { unit, value })
     }
 }
 
@@ -47,7 +47,7 @@ mod tests {
 
     #[test]
     fn test_cmd1_request_encodes_no_data() {
-        let req = Cmd1Request;
+        let req = ReadPrimaryVariableRequest;
         let mut buf = [0u8; 4];
         let len = req.encode_data(&mut buf).unwrap();
         assert_eq!(len, 0);
@@ -58,7 +58,7 @@ mod tests {
         // From RESP_CMD1_LONG test vector (after stripping 2 status bytes):
         // unit=0x2D (45=meters), value=3.14
         let data = [0x2D, 0x40, 0x48, 0xF5, 0xC3];
-        let resp = Cmd1Response::decode_data(&data).unwrap();
+        let resp = ReadPrimaryVariableResponse::decode_data(&data).unwrap();
         assert_eq!(resp.unit, UnitCode::Meters);
         // 3.14 in IEEE 754 round-trips exactly here
         let expected = f32::from_be_bytes([0x40, 0x48, 0xF5, 0xC3]);
@@ -69,14 +69,14 @@ mod tests {
     fn test_cmd1_response_too_short() {
         let data = [0x2D, 0x40, 0x48]; // only 3 bytes
         assert_eq!(
-            Cmd1Response::decode_data(&data),
+            ReadPrimaryVariableResponse::decode_data(&data),
             Err(DecodeError::BufferTooShort)
         );
     }
 
     #[test]
     fn test_cmd1_command_number() {
-        assert_eq!(Cmd1Request::COMMAND_NUMBER, 1);
-        assert_eq!(Cmd1Response::COMMAND_NUMBER, 1);
+        assert_eq!(ReadPrimaryVariableRequest::COMMAND_NUMBER, 1);
+        assert_eq!(ReadPrimaryVariableResponse::COMMAND_NUMBER, 1);
     }
 }

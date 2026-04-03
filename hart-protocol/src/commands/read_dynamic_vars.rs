@@ -7,7 +7,7 @@ use crate::units::UnitCode;
 
 /// Command 3 request: no data payload.
 #[derive(Debug, Clone)]
-pub struct Cmd3Request;
+pub struct ReadDynamicVarsRequest;
 
 /// Command 3 response: loop current + 4 dynamic variables (PV, SV, TV, QV).
 ///
@@ -22,7 +22,7 @@ pub struct Cmd3Request;
 ///   [19]     QV unit code
 ///   [20..23] QV value (f32 big-endian)
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cmd3Response {
+pub struct ReadDynamicVarsResponse {
     pub loop_current_ma: f32,
     pub pv_unit: UnitCode,
     pub pv: f32,
@@ -34,7 +34,7 @@ pub struct Cmd3Response {
     pub qv: f32,
 }
 
-impl CommandRequest for Cmd3Request {
+impl CommandRequest for ReadDynamicVarsRequest {
     const COMMAND_NUMBER: u8 = READ_DYNAMIC_VARS;
 
     fn encode_data(&self, _buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -42,7 +42,7 @@ impl CommandRequest for Cmd3Request {
     }
 }
 
-impl CommandResponse for Cmd3Response {
+impl CommandResponse for ReadDynamicVarsResponse {
     const COMMAND_NUMBER: u8 = READ_DYNAMIC_VARS;
 
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError> {
@@ -59,7 +59,7 @@ impl CommandResponse for Cmd3Response {
         let qv_unit = UnitCode::from_u8(data[19]);
         let qv = f32::from_be_bytes([data[20], data[21], data[22], data[23]]);
 
-        Ok(Cmd3Response {
+        Ok(ReadDynamicVarsResponse {
             loop_current_ma,
             pv_unit,
             pv,
@@ -79,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_cmd3_request_encodes_no_data() {
-        let req = Cmd3Request;
+        let req = ReadDynamicVarsRequest;
         let mut buf = [0u8; 4];
         let len = req.encode_data(&mut buf).unwrap();
         assert_eq!(len, 0);
@@ -87,8 +87,8 @@ mod tests {
 
     #[test]
     fn test_cmd3_command_number() {
-        assert_eq!(Cmd3Request::COMMAND_NUMBER, 3);
-        assert_eq!(Cmd3Response::COMMAND_NUMBER, 3);
+        assert_eq!(ReadDynamicVarsRequest::COMMAND_NUMBER, 3);
+        assert_eq!(ReadDynamicVarsResponse::COMMAND_NUMBER, 3);
     }
 
     #[test]
@@ -104,7 +104,7 @@ mod tests {
             0xFA, 0x7F, 0xC0, 0x00, 0x00, // QV: celsius(32=0x20), 25.3
             0x20, 0x41, 0xCA, 0x66, 0x66,
         ];
-        let resp = Cmd3Response::decode_data(&data).unwrap();
+        let resp = ReadDynamicVarsResponse::decode_data(&data).unwrap();
         assert_eq!(resp.loop_current_ma, 12.5f32);
         assert_eq!(resp.pv_unit, UnitCode::Percent);
         assert_eq!(resp.pv, 53.125f32);
@@ -122,7 +122,7 @@ mod tests {
     fn test_cmd3_response_too_short() {
         let data = [0u8; 23]; // needs 24
         assert_eq!(
-            Cmd3Response::decode_data(&data),
+            ReadDynamicVarsResponse::decode_data(&data),
             Err(DecodeError::BufferTooShort)
         );
     }
