@@ -8,8 +8,9 @@
 //! No I/O is performed — this is a pure codec library.
 
 #![no_std]
+#![warn(missing_docs)]
 
-/// The version of this crate, set at compile time from Cargo.toml.
+/// The version of this crate, set at compile time from `Cargo.toml`.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod commands;
@@ -20,3 +21,10 @@ pub mod error;
 pub mod packed_string;
 pub mod types;
 pub mod units;
+
+// Re-export key types for ergonomic imports.
+pub use decode::{Decoder, RawFrame};
+pub use encode::encode_frame;
+pub use error::{DecodeError, EncodeError};
+pub use types::{Address, FrameType, MasterRole, ResponseStatus};
+pub use units::UnitCode;

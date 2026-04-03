@@ -16,6 +16,7 @@ pub struct ReadMessageRequest;
 ///   which decodes to 32 characters.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadMessageResponse {
+    /// 32-character ASCII message decoded from packed bytes.
     pub message: [u8; 32],
 }
 

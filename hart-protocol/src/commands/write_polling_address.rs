@@ -7,22 +7,26 @@ use crate::error::{DecodeError, EncodeError};
 /// Command 6 request: polling address and loop current mode.
 ///
 /// Layout (2 bytes):
-///   [0] polling_address
-///   [1] loop_current_mode
+///   0: `polling_address`
+///   1: `loop_current_mode`
 #[derive(Debug, Clone, PartialEq)]
 pub struct WritePollingAddressRequest {
+    /// New polling address to set.
     pub polling_address: u8,
+    /// Loop current mode (0 = disabled, 1 = enabled).
     pub loop_current_mode: u8,
 }
 
 /// Command 6 response: echoes polling address and loop current mode.
 ///
 /// Layout (2 bytes):
-///   [0] polling_address
-///   [1] loop_current_mode
+///   0: `polling_address`
+///   1: `loop_current_mode`
 #[derive(Debug, Clone, PartialEq)]
 pub struct WritePollingAddressResponse {
+    /// Echoed polling address.
     pub polling_address: u8,
+    /// Echoed loop current mode.
     pub loop_current_mode: u8,
 }
 

@@ -1,37 +1,58 @@
+//! Core HART protocol types: addresses, frame types, and response status.
+
 use crate::consts::address;
 use crate::error::DecodeError;
 
-#[derive(Debug, Clone, PartialEq)]
+/// Identifies the HART master that originated a frame.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MasterRole {
+    /// Primary master.
     Primary,
+    /// Secondary master.
     Secondary,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+/// The type of a HART frame.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FrameType {
+    /// A command request from the master.
     Request,
+    /// A response from the field device.
     Response,
+    /// An unsolicited burst-mode message from the field device.
     Burst,
 }
 
+/// A HART address, either short (1 byte) or long (5 bytes).
 #[derive(Debug, Clone, PartialEq)]
 pub enum Address {
+    /// Short-frame address (polling address, 1 byte on the wire).
     Short {
+        /// The master role (primary or secondary).
         master: MasterRole,
+        /// Whether the device is in burst mode.
         burst: bool,
+        /// Polling address (0-15).
         poll_address: u8,
     },
+    /// Long-frame (unique) address (5 bytes on the wire).
     Long {
+        /// The master role (primary or secondary).
         master: MasterRole,
+        /// Whether the device is in burst mode.
         burst: bool,
+        /// Manufacturer identification code (6 bits).
         manufacturer_id: u8,
+        /// Device type code.
         device_type: u8,
+        /// 24-bit unique device identifier.
         device_id: u32,
     },
 }
 
 impl Address {
-    /// Encodes the address into `buf`. Returns the number of bytes written (1 for short, 5 for long).
+    /// Encodes the address into `buf`. Returns the number of bytes written
+    /// (1 for short, 5 for long).
     pub fn encode(&self, buf: &mut [u8]) -> usize {
         match self {
             Address::Short {
@@ -66,15 +87,23 @@ impl Address {
                 }
                 buf[0] = b0;
                 buf[1] = *device_type;
-                buf[2] = ((device_id >> 16) & 0xFF) as u8;
-                buf[3] = ((device_id >> 8) & 0xFF) as u8;
-                buf[4] = (device_id & 0xFF) as u8;
+                #[allow(clippy::cast_possible_truncation)]
+                {
+                    buf[2] = ((device_id >> 16) & 0xFF) as u8;
+                    buf[3] = ((device_id >> 8) & 0xFF) as u8;
+                    buf[4] = (device_id & 0xFF) as u8;
+                }
                 5
             }
         }
     }
 
     /// Decodes an address from `buf`. Returns `(Address, bytes_consumed)`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DecodeError::BufferTooShort`] if `buf` has fewer bytes than
+    /// required for the address format.
     pub fn decode(buf: &[u8], is_long: bool) -> Result<(Self, usize), DecodeError> {
         if is_long {
             if buf.len() < 5 {
@@ -89,7 +118,8 @@ impl Address {
             let burst = b0 & address::BURST_MODE_BIT != 0;
             let manufacturer_id = b0 & address::MANUFACTURER_ID_MASK;
             let device_type = buf[1];
-            let device_id = ((buf[2] as u32) << 16) | ((buf[3] as u32) << 8) | (buf[4] as u32);
+            let device_id =
+                (u32::from(buf[2]) << 16) | (u32::from(buf[3]) << 8) | u32::from(buf[4]);
             Ok((
                 Address::Long {
                     master,
@@ -124,6 +154,7 @@ impl Address {
     }
 
     /// Returns true if this is a long address.
+    #[must_use]
     pub fn is_long(&self) -> bool {
         matches!(self, Address::Long { .. })
     }
@@ -132,11 +163,15 @@ impl Address {
 /// Response status bytes from a HART response frame.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ResponseStatus {
+    /// Communication status / error summary (byte 0).
     pub byte0: u8,
+    /// Field device status flags (byte 1).
     pub byte1: u8,
 }
 
 impl ResponseStatus {
+    /// Construct a `ResponseStatus` from the two raw status bytes.
+    #[must_use]
     pub fn from_bytes(bytes: [u8; 2]) -> Self {
         ResponseStatus {
             byte0: bytes[0],
@@ -145,31 +180,37 @@ impl ResponseStatus {
     }
 
     /// True if any communication error bit is set in byte 0.
+    #[must_use]
     pub fn has_error(&self) -> bool {
         self.byte0 != 0
     }
 
     /// Byte 1 bit 7: field device malfunction.
+    #[must_use]
     pub fn device_malfunction(&self) -> bool {
         self.byte1 & 0x80 != 0
     }
 
     /// Byte 1 bit 6: configuration changed.
+    #[must_use]
     pub fn config_changed(&self) -> bool {
         self.byte1 & 0x40 != 0
     }
 
     /// Byte 1 bit 5: cold start.
+    #[must_use]
     pub fn cold_start(&self) -> bool {
         self.byte1 & 0x20 != 0
     }
 
     /// Byte 1 bit 4: more status available.
+    #[must_use]
     pub fn more_status_available(&self) -> bool {
         self.byte1 & 0x10 != 0
     }
 
     /// Byte 1 bit 3: primary variable out of limits.
+    #[must_use]
     pub fn pv_out_of_limits(&self) -> bool {
         self.byte1 & 0x08 != 0
     }
@@ -181,7 +222,7 @@ mod tests {
 
     #[test]
     fn test_short_address_roundtrip_primary_poll0() {
-        // Primary master, no burst, poll_address=0 → byte 0x80
+        // Primary master, no burst, poll_address=0 -> byte 0x80
         let addr = Address::Short {
             master: MasterRole::Primary,
             burst: false,

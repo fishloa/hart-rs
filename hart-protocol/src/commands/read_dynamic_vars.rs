@@ -12,25 +12,34 @@ pub struct ReadDynamicVarsRequest;
 /// Command 3 response: loop current + 4 dynamic variables (PV, SV, TV, QV).
 ///
 /// Layout (24 bytes):
-///   [0..3]   loop current in mA (f32 big-endian)
-///   [4]      PV unit code
-///   [5..8]   PV value (f32 big-endian)
-///   [9]      SV unit code
-///   [10..13] SV value (f32 big-endian)
-///   [14]     TV unit code
-///   [15..18] TV value (f32 big-endian)
-///   [19]     QV unit code
-///   [20..23] QV value (f32 big-endian)
+///   0..3:   loop current in mA (f32 big-endian)
+///   4:      PV unit code
+///   5..8:   PV value (f32 big-endian)
+///   9:      SV unit code
+///   10..13: SV value (f32 big-endian)
+///   14:     TV unit code
+///   15..18: TV value (f32 big-endian)
+///   19:     QV unit code
+///   20..23: QV value (f32 big-endian)
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadDynamicVarsResponse {
+    /// Loop current in milliamperes.
     pub loop_current_ma: f32,
+    /// PV engineering unit code.
     pub pv_unit: UnitCode,
+    /// Primary variable value.
     pub pv: f32,
+    /// SV engineering unit code.
     pub sv_unit: UnitCode,
+    /// Secondary variable value.
     pub sv: f32,
+    /// TV engineering unit code.
     pub tv_unit: UnitCode,
+    /// Tertiary variable value.
     pub tv: f32,
+    /// QV engineering unit code.
     pub qv_unit: UnitCode,
+    /// Quaternary variable value.
     pub qv: f32,
 }
 

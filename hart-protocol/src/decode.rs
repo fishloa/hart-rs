@@ -1,3 +1,9 @@
+//! Byte-at-a-time HART frame decoder.
+//!
+//! Feed received bytes one at a time into [`Decoder::feed`]; when a
+//! complete, checksum-valid frame has been accumulated the decoder
+//! returns a [`RawFrame`].
+
 use heapless::Vec;
 
 use crate::consts::{delimiter, MIN_PREAMBLE_COUNT, PREAMBLE_BYTE};
@@ -7,11 +13,14 @@ use crate::types::{Address, FrameType};
 /// A fully decoded raw HART frame.
 #[derive(Debug, Clone, PartialEq)]
 pub struct RawFrame {
+    /// The frame type (request, response, or burst).
     pub frame_type: FrameType,
+    /// The decoded source/destination address.
     pub address: Address,
+    /// The HART command number.
     pub command: u8,
-    /// Data payload (excludes status bytes — those are in the raw data for responses
-    /// since this is a raw frame layer; upper layers strip status bytes).
+    /// Data payload (includes response status bytes for response frames;
+    /// upper layers strip them).
     pub data: Vec<u8, 256>,
 }
 
@@ -50,6 +59,8 @@ pub struct Decoder {
 }
 
 impl Decoder {
+    /// Create a new decoder in the initial hunting state.
+    #[must_use]
     pub fn new() -> Self {
         Decoder {
             state: State::Hunting,
@@ -64,6 +75,8 @@ impl Decoder {
         }
     }
 
+    /// Reset the decoder to its initial state, discarding any
+    /// partially-received frame.
     pub fn reset(&mut self) {
         self.state = State::Hunting;
         self.frame_type = None;
@@ -82,8 +95,41 @@ impl Decoder {
     /// - `Ok(None)` — frame not yet complete, keep feeding bytes.
     /// - `Ok(Some(frame))` — a complete, checksum-valid frame was decoded.
     /// - `Err(e)` — a decode error occurred (state is reset automatically).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hart_protocol::decode::Decoder;
+    ///
+    /// // A minimal Command 0 short-frame request.
+    /// let frame_bytes: &[u8] = &[
+    ///     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // preamble
+    ///     0x02,                          // delimiter: request short
+    ///     0x80,                          // address: primary master, poll 0
+    ///     0x00,                          // command 0
+    ///     0x00,                          // byte count 0
+    ///     0x82,                          // checksum
+    /// ];
+    ///
+    /// let mut decoder = Decoder::new();
+    /// let mut frame = None;
+    /// for &b in frame_bytes {
+    ///     if let Ok(Some(f)) = decoder.feed(b) {
+    ///         frame = Some(f);
+    ///         break;
+    ///     }
+    /// }
+    /// assert!(frame.is_some());
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DecodeError::ChecksumMismatch`] if the frame checksum is
+    /// invalid, or [`DecodeError::InvalidDelimiter`] if the delimiter byte
+    /// is not recognised.
     pub fn feed(&mut self, byte: u8) -> Result<Option<RawFrame>, DecodeError> {
-        match &self.state.clone() {
+        let state = core::mem::replace(&mut self.state, State::Hunting);
+        match state {
             State::Hunting => {
                 if byte == PREAMBLE_BYTE {
                     self.state = State::Preamble(1);
@@ -96,7 +142,7 @@ impl Decoder {
                 if byte == PREAMBLE_BYTE {
                     self.state = State::Preamble(count + 1);
                     Ok(None)
-                } else if *count >= MIN_PREAMBLE_COUNT {
+                } else if count >= MIN_PREAMBLE_COUNT {
                     // This byte is the delimiter
                     self.process_delimiter(byte)
                 } else {
@@ -177,7 +223,7 @@ impl Decoder {
                 };
 
                 let frame = RawFrame {
-                    frame_type: self.frame_type.clone().unwrap(),
+                    frame_type: self.frame_type.unwrap_or(FrameType::Request),
                     address,
                     command: self.command,
                     data: self.data.clone(),

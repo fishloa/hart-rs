@@ -15,26 +15,36 @@ pub struct ReadUniqueIdByTagRequest {
 /// Command 11 response: device identification fields (same layout as Command 0).
 ///
 /// Layout (12 bytes):
-///   [0]     expansion_code
-///   [1..2]  expanded_device_type (big-endian u16)
-///   [3]     min_preamble_count
-///   [4]     hart_revision
-///   [5]     device_revision
-///   [6]     software_revision
-///   [7]     hw_rev_and_signaling
-///   [8]     flags
-///   [9..11] device_id (24-bit big-endian)
+///   0:     `expansion_code`
+///   1..2:  `expanded_device_type` (big-endian u16)
+///   3:     `min_preamble_count`
+///   4:     `hart_revision`
+///   5:     `device_revision`
+///   6:     `software_revision`
+///   7:     `hw_rev_and_signaling`
+///   8:     flags
+///   9..11: `device_id` (24-bit big-endian)
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadUniqueIdByTagResponse {
+    /// HART expansion code.
     pub expansion_code: u8,
+    /// Expanded device type identifier.
     pub expanded_device_type: u16,
+    /// Minimum preamble count the device expects.
     pub min_preamble_count: u8,
+    /// HART protocol revision.
     pub hart_revision: u8,
+    /// Device revision number.
     pub device_revision: u8,
+    /// Software revision number.
     pub software_revision: u8,
+    /// Hardware revision.
     pub hardware_revision: u8,
+    /// Physical signaling code.
     pub physical_signaling: u8,
+    /// Device flags byte.
     pub flags: u8,
+    /// 24-bit unique device identifier.
     pub device_id: u32,
 }
 
@@ -71,6 +81,7 @@ impl CommandResponse for ReadUniqueIdByTagResponse {
 }
 
 /// Decode a 6-byte packed tag into an 8-byte ASCII buffer.
+#[must_use]
 pub fn decode_tag(packed: &[u8; 6]) -> [u8; 8] {
     let mut tag = [b' '; 8];
     decode_packed(packed, &mut tag);

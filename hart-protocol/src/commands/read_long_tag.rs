@@ -11,9 +11,10 @@ pub struct ReadLongTagRequest;
 /// Command 20 response: 32-byte plain ASCII long tag.
 ///
 /// Layout (32 bytes):
-///   [0..31] long_tag — plain ASCII (NOT packed), padded with spaces.
+///   0..31: `long_tag` — plain ASCII (NOT packed), padded with spaces.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadLongTagResponse {
+    /// 32-byte plain ASCII long tag.
     pub long_tag: [u8; 32],
 }
 

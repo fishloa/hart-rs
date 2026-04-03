@@ -1,13 +1,46 @@
+//! HART frame encoder.
+//!
+//! Produces wire-format HART frames from typed inputs.
+
 use crate::consts::{delimiter, MAX_DATA_LENGTH, PREAMBLE_BYTE};
 use crate::error::EncodeError;
 use crate::types::{Address, FrameType};
 
 /// Encodes a HART frame into `buf`.
 ///
-/// Layout: [preamble x N] [delimiter] [address 1 or 5 bytes] [command] [byte_count] [data...] [checksum]
+/// Layout: `[preamble x N] [delimiter] [address 1 or 5 bytes] [command] [byte_count] [data...] [checksum]`
 ///
-/// Returns the total number of bytes written, or an error if the buffer is too small
-/// or the data payload exceeds MAX_DATA_LENGTH.
+/// Returns the total number of bytes written.
+///
+/// # Examples
+///
+/// ```
+/// use hart_protocol::encode::encode_frame;
+/// use hart_protocol::types::{Address, FrameType, MasterRole};
+/// use hart_protocol::consts::MIN_PREAMBLE_COUNT;
+///
+/// let address = Address::Short {
+///     master: MasterRole::Primary,
+///     burst: false,
+///     poll_address: 0,
+/// };
+/// let mut buf = [0u8; 32];
+/// let len = encode_frame(
+///     FrameType::Request,
+///     &address,
+///     0,
+///     &[],
+///     MIN_PREAMBLE_COUNT,
+///     &mut buf,
+/// ).unwrap();
+/// assert!(len > 0);
+/// ```
+///
+/// # Errors
+///
+/// Returns [`EncodeError::BufferTooSmall`] if `buf` is too short, or
+/// [`EncodeError::DataTooLong`] if the data payload exceeds
+/// [`MAX_DATA_LENGTH`].
 pub fn encode_frame(
     frame_type: FrameType,
     address: &Address,
@@ -22,7 +55,7 @@ pub fn encode_frame(
 
     let addr_len = if address.is_long() { 5 } else { 1 };
     // preamble + delimiter + address + command + byte_count + data + checksum
-    let total = preamble_count as usize + 1 + addr_len + 1 + 1 + data.len() + 1;
+    let total = usize::from(preamble_count) + 1 + addr_len + 1 + 1 + data.len() + 1;
 
     if buf.len() < total {
         return Err(EncodeError::BufferTooSmall);
@@ -37,7 +70,7 @@ pub fn encode_frame(
     }
 
     // Delimiter
-    let delim = compute_delimiter(&frame_type, address.is_long());
+    let delim = compute_delimiter(frame_type, address.is_long());
     buf[pos] = delim;
     pos += 1;
 
@@ -57,6 +90,7 @@ pub fn encode_frame(
     pos += 1;
 
     // Byte count
+    #[allow(clippy::cast_possible_truncation)]
     let byte_count = data.len() as u8;
     buf[pos] = byte_count;
     checksum ^= byte_count;
@@ -76,7 +110,7 @@ pub fn encode_frame(
     Ok(pos)
 }
 
-fn compute_delimiter(frame_type: &FrameType, is_long: bool) -> u8 {
+fn compute_delimiter(frame_type: FrameType, is_long: bool) -> u8 {
     match (frame_type, is_long) {
         (FrameType::Request, false) => delimiter::REQUEST_SHORT,
         (FrameType::Request, true) => delimiter::REQUEST_LONG,

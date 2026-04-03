@@ -30,6 +30,11 @@ where
     /// Transmit `data` over the HART bus.
     ///
     /// Asserts RTS before writing, then deasserts RTS after flushing.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Ad5700Error::Uart`] on UART write/flush failures or
+    /// [`Ad5700Error::NoCarrier`] if RTS toggling fails.
     pub fn transmit(&mut self, data: &[u8]) -> Result<(), Ad5700Error<<UART as ErrorType>::Error>> {
         self.rts.set_high().map_err(|_| Ad5700Error::NoCarrier)?;
         self.uart.write_all(data).map_err(Ad5700Error::Uart)?;
@@ -42,6 +47,10 @@ where
     ///
     /// Returns the number of bytes read. Stops when no more bytes are immediately
     /// available (i.e. a single `read` call returns 0 or fills `buf`).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Ad5700Error::Uart`] on UART read failures.
     pub fn receive_into(
         &mut self,
         buf: &mut [u8],

@@ -12,25 +12,33 @@ pub struct WriteTagDescriptorDateRequest {
     pub tag: [u8; 8],
     /// 16-character ASCII descriptor.
     pub descriptor: [u8; 16],
+    /// Day of month.
     pub day: u8,
+    /// Month.
     pub month: u8,
+    /// Year (years since 1900).
     pub year: u8,
 }
 
 /// Command 18 response: echoes tag, descriptor, and date (same as Command 13 response).
 ///
 /// Layout (21 bytes):
-///   [0..5]   tag: 6 packed bytes → 8 ASCII chars
-///   [6..17]  descriptor: 12 packed bytes → 16 ASCII chars
-///   [18]     day
-///   [19]     month
-///   [20]     year
+///   0..5:   tag: 6 packed bytes → 8 ASCII chars
+///   6..17:  descriptor: 12 packed bytes → 16 ASCII chars
+///   18:     day
+///   19:     month
+///   20:     year
 #[derive(Debug, Clone, PartialEq)]
 pub struct WriteTagDescriptorDateResponse {
+    /// Echoed 8-character ASCII tag.
     pub tag: [u8; 8],
+    /// Echoed 16-character ASCII descriptor.
     pub descriptor: [u8; 16],
+    /// Echoed day of month.
     pub day: u8,
+    /// Echoed month.
     pub month: u8,
+    /// Echoed year (years since 1900).
     pub year: u8,
 }
 

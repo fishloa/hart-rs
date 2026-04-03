@@ -12,17 +12,22 @@ pub struct ReadTagDescriptorDateRequest;
 /// Command 13 response: tag (8 chars), descriptor (16 chars), and date (day/month/year).
 ///
 /// Layout (21 bytes):
-///   [0..5]   tag: 6 packed bytes → 8 ASCII chars
-///   [6..17]  descriptor: 12 packed bytes → 16 ASCII chars
-///   [18]     day
-///   [19]     month
-///   [20]     year (years since 1900)
+///   0..5:   tag: 6 packed bytes → 8 ASCII chars
+///   6..17:  descriptor: 12 packed bytes → 16 ASCII chars
+///   18:     day
+///   19:     month
+///   20:     year (years since 1900)
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadTagDescriptorDateResponse {
+    /// 8-character ASCII tag.
     pub tag: [u8; 8],
+    /// 16-character ASCII descriptor.
     pub descriptor: [u8; 16],
+    /// Day of month.
     pub day: u8,
+    /// Month.
     pub month: u8,
+    /// Year (years since 1900).
     pub year: u8,
 }
 

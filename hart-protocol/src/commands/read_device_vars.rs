@@ -10,29 +10,36 @@ use crate::units::UnitCode;
 /// A single device variable entry in a Command 9 response.
 ///
 /// Layout per variable (8 bytes):
-///   [0]    device_var_code
-///   [1]    classification
-///   [2]    unit code
-///   [3..6] value (f32 big-endian)
-///   [7]    status
+///   0:    `device_var_code`
+///   1:    classification
+///   2:    unit code
+///   3..6: value (f32 big-endian)
+///   7:    status
 #[derive(Debug, Clone)]
 pub struct DeviceVariable {
+    /// Device variable code.
     pub device_var_code: u8,
+    /// Device variable classification.
     pub classification: u8,
+    /// Engineering unit code.
     pub unit: UnitCode,
+    /// Variable value.
     pub value: f32,
+    /// Variable status flags.
     pub status: u8,
 }
 
 /// Command 9 request: up to 8 slot codes specifying which variables to read.
 #[derive(Debug, Clone)]
 pub struct ReadDeviceVarsRequest {
+    /// Slot codes specifying which variables to read.
     pub slot_codes: Vec<u8, 8>,
 }
 
 /// Command 9 response: up to 8 device variables with status.
 #[derive(Debug, Clone)]
 pub struct ReadDeviceVarsResponse {
+    /// Decoded device variables.
     pub variables: Vec<DeviceVariable, 8>,
 }
 
@@ -115,7 +122,7 @@ mod tests {
         // One variable: code=0x00, class=0x01, unit=45(Meters), value=2.5, status=0x00
         let value_bytes = 2.5f32.to_be_bytes();
         let mut data = [0u8; 8];
-        data[0] = 0x00; // device_var_code
+        data[0] = 0x00; // `device_var_code`
         data[1] = 0x01; // classification
         data[2] = 45; // unit: Meters
         data[3] = value_bytes[0];

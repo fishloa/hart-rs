@@ -72,7 +72,7 @@ Encode a Command 0 request frame and decode a response using `hart-protocol`
 use hart_protocol::encode::encode_frame;
 use hart_protocol::decode::Decoder;
 use hart_protocol::types::{Address, FrameType, MasterRole};
-use hart_protocol::commands::read_device_id::{Cmd0Request, Cmd0Response};
+use hart_protocol::commands::read_device_id::{ReadDeviceIdRequest, ReadDeviceIdResponse};
 use hart_protocol::commands::{CommandRequest, CommandResponse};
 use hart_protocol::consts::MIN_PREAMBLE_COUNT;
 
@@ -83,15 +83,15 @@ let address = Address::Short {
     poll_address: 0,
 };
 
-let req = Cmd0Request;
-let mut data_buf = [0u8; 0];
+let req = ReadDeviceIdRequest;
+let mut data_buf = [0u8; 4];
 let data_len = req.encode_data(&mut data_buf).unwrap();
 
 let mut frame_buf = [0u8; 32];
 let frame_len = encode_frame(
     FrameType::Request,
     &address,
-    Cmd0Request::COMMAND_NUMBER,
+    ReadDeviceIdRequest::COMMAND_NUMBER,
     &data_buf[..data_len],
     MIN_PREAMBLE_COUNT,
     &mut frame_buf,
@@ -124,7 +124,7 @@ for &byte in raw_response {
 if let Some(frame) = raw_frame {
     // Strip the two response status bytes before decoding the command payload.
     let payload = &frame.data[2..];
-    let resp = Cmd0Response::decode_data(payload).unwrap();
+    let resp = ReadDeviceIdResponse::decode_data(payload).unwrap();
     let _ = resp.device_id;
 }
 ```

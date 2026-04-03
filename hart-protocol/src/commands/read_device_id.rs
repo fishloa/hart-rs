@@ -11,26 +11,36 @@ pub struct ReadDeviceIdRequest;
 /// Command 0 response: device identification fields.
 ///
 /// Layout (12 bytes):
-///   [0]     expansion_code
-///   [1..2]  expanded_device_type (big-endian u16)
-///   [3]     min_preamble_count
-///   [4]     hart_revision
-///   [5]     device_revision
-///   [6]     software_revision
-///   [7]     hw_rev_and_signaling (hw_revision = bits[7:3], physical_signaling = bits[2:0])
-///   [8]     flags
-///   [9..11] device_id (24-bit big-endian)
+///   - `[0]`     `expansion_code`
+///   - `[1..2]`  `expanded_device_type` (big-endian u16)
+///   - `[3]`     `min_preamble_count`
+///   - `[4]`     `hart_revision`
+///   - `[5]`     `device_revision`
+///   - `[6]`     `software_revision`
+///   - `[7]`     `hw_rev_and_signaling` (`hardware_revision` = bits\[7:3\], `physical_signaling` = bits\[2:0\])
+///   - `[8]`     `flags`
+///   - `[9..11]` `device_id` (24-bit big-endian)
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadDeviceIdResponse {
+    /// HART expansion code (0xFE = expanded).
     pub expansion_code: u8,
+    /// Expanded device type identifier.
     pub expanded_device_type: u16,
+    /// Minimum preamble count the device expects.
     pub min_preamble_count: u8,
+    /// HART protocol revision supported by the device.
     pub hart_revision: u8,
+    /// Device-specific revision number.
     pub device_revision: u8,
+    /// Device software revision number.
     pub software_revision: u8,
+    /// Hardware revision (upper 5 bits of byte 7).
     pub hardware_revision: u8,
+    /// Physical signaling code (lower 3 bits of byte 7).
     pub physical_signaling: u8,
+    /// Device flags byte.
     pub flags: u8,
+    /// 24-bit unique device identifier.
     pub device_id: u32,
 }
 
@@ -77,21 +87,8 @@ mod tests {
 
     #[test]
     fn test_cmd0_response_decode() {
-        // From RESP_CMD0_LONG test vector (after stripping 2 status bytes):
-        // expansion=0xFE, manufacturer_id(exp_type_hi)=0x1A, device_type(exp_type_lo)=0x2B,
-        // preambles=5, hart_rev=7, dev_rev=1, sw_rev=3, hw_rev_raw=0x04, flags=0, device_id=0x112233
-        // hw_revision = 0x04 >> 3 = 0, physical_signaling = 0x04 & 0x07 = 4
         let data = [
-            0xFE, // expansion_code
-            0x1A, // expanded_device_type high
-            0x2B, // expanded_device_type low
-            0x05, // min_preamble_count
-            0x07, // hart_revision
-            0x01, // device_revision
-            0x03, // software_revision
-            0x04, // hw_rev_and_signaling
-            0x00, // flags
-            0x11, 0x22, 0x33, // device_id
+            0xFE, 0x1A, 0x2B, 0x05, 0x07, 0x01, 0x03, 0x04, 0x00, 0x11, 0x22, 0x33,
         ];
 
         let resp = ReadDeviceIdResponse::decode_data(&data).unwrap();
@@ -101,15 +98,15 @@ mod tests {
         assert_eq!(resp.hart_revision, 7);
         assert_eq!(resp.device_revision, 1);
         assert_eq!(resp.software_revision, 3);
-        assert_eq!(resp.hardware_revision, 0); // 0x04 >> 3 = 0
-        assert_eq!(resp.physical_signaling, 4); // 0x04 & 0x07 = 4
+        assert_eq!(resp.hardware_revision, 0);
+        assert_eq!(resp.physical_signaling, 4);
         assert_eq!(resp.flags, 0);
         assert_eq!(resp.device_id, 0x112233);
     }
 
     #[test]
     fn test_cmd0_response_too_short() {
-        let data = [0u8; 11]; // needs 12
+        let data = [0u8; 11];
         assert_eq!(
             ReadDeviceIdResponse::decode_data(&data),
             Err(DecodeError::BufferTooShort)

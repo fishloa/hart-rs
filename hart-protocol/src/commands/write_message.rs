@@ -15,6 +15,7 @@ pub struct WriteMessageRequest {
 /// Command 17 response: echoes the message, decoded from 24 packed bytes.
 #[derive(Debug, Clone, PartialEq)]
 pub struct WriteMessageResponse {
+    /// 32-character ASCII message echoed from the device.
     pub message: [u8; 32],
 }
 

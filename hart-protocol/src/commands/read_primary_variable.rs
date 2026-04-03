@@ -12,11 +12,13 @@ pub struct ReadPrimaryVariableRequest;
 /// Command 1 response: primary variable unit and value.
 ///
 /// Layout (5 bytes):
-///   [0]    unit code
-///   [1..4] PV value (f32 big-endian)
+///   0:    unit code
+///   1..4: PV value (f32 big-endian)
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadPrimaryVariableResponse {
+    /// Engineering unit code.
     pub unit: UnitCode,
+    /// Primary variable value.
     pub value: f32,
 }
 

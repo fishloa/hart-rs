@@ -1,3 +1,10 @@
+//! Typed HART command request and response structs.
+//!
+//! Each supported command is in its own sub-module (e.g.
+//! [`read_device_id`], [`read_primary_variable`]).  All request types
+//! implement [`CommandRequest`] and all response types implement
+//! [`CommandResponse`].
+
 use crate::error::{DecodeError, EncodeError};
 
 pub mod read_additional_status;
@@ -24,13 +31,29 @@ pub mod write_tag_descriptor_date;
 
 /// Trait for HART command requests.
 pub trait CommandRequest {
+    /// The HART command number for this request.
     const COMMAND_NUMBER: u8;
+
+    /// Encode the request data payload into `buf`.
+    ///
+    /// Returns the number of bytes written.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EncodeError::BufferTooSmall`] if `buf` is too short.
     fn encode_data(&self, buf: &mut [u8]) -> Result<usize, EncodeError>;
 }
 
 /// Trait for HART command responses.
 pub trait CommandResponse: Sized {
+    /// The HART command number for this response.
     const COMMAND_NUMBER: u8;
+
+    /// Decode the response data payload from `data`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DecodeError::BufferTooShort`] if `data` is too short.
     fn decode_data(data: &[u8]) -> Result<Self, DecodeError>;
 }
 
@@ -38,28 +61,31 @@ pub trait CommandResponse: Sized {
 
 /// Decode a 24-bit big-endian unsigned integer from 3 bytes.
 pub(crate) fn decode_u24_be(data: &[u8]) -> u32 {
-    ((data[0] as u32) << 16) | ((data[1] as u32) << 8) | (data[2] as u32)
+    (u32::from(data[0]) << 16) | (u32::from(data[1]) << 8) | u32::from(data[2])
 }
 
 /// Encode a 24-bit big-endian unsigned integer into 3 bytes.
 pub(crate) fn encode_u24_be(value: u32, buf: &mut [u8]) {
-    buf[0] = ((value >> 16) & 0xFF) as u8;
-    buf[1] = ((value >> 8) & 0xFF) as u8;
-    buf[2] = (value & 0xFF) as u8;
+    #[allow(clippy::cast_possible_truncation)]
+    {
+        buf[0] = ((value >> 16) & 0xFF) as u8;
+        buf[1] = ((value >> 8) & 0xFF) as u8;
+        buf[2] = (value & 0xFF) as u8;
+    }
 }
 
 /// Decode a HART device identity block (12 bytes, used by Command 0 and Command 11 responses).
 ///
 /// Layout:
-///   [0]     expansion_code
-///   [1..2]  expanded_device_type (big-endian u16)
-///   [3]     min_preamble_count
-///   [4]     hart_revision
-///   [5]     device_revision
-///   [6]     software_revision
-///   [7]     hw_rev_and_signaling (hw_revision = bits[7:3], physical_signaling = bits[2:0])
-///   [8]     flags
-///   [9..11] device_id (24-bit big-endian)
+///   - `[0]`     `expansion_code`
+///   - `[1..2]`  `expanded_device_type` (big-endian u16)
+///   - `[3]`     `min_preamble_count`
+///   - `[4]`     `hart_revision`
+///   - `[5]`     `device_revision`
+///   - `[6]`     `software_revision`
+///   - `[7]`     `hw_rev_and_signaling` (`hardware_revision` = bits\[7:3\], `physical_signaling` = bits\[2:0\])
+///   - `[8]`     `flags`
+///   - `[9..11]` `device_id` (24-bit big-endian)
 pub(crate) struct DeviceIdentity {
     pub expansion_code: u8,
     pub expanded_device_type: u16,
@@ -81,7 +107,7 @@ impl DeviceIdentity {
         let hw_raw = data[7];
         Ok(DeviceIdentity {
             expansion_code: data[0],
-            expanded_device_type: ((data[1] as u16) << 8) | (data[2] as u16),
+            expanded_device_type: (u16::from(data[1]) << 8) | u16::from(data[2]),
             min_preamble_count: data[3],
             hart_revision: data[4],
             device_revision: data[5],

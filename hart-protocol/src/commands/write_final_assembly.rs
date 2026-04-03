@@ -7,15 +7,17 @@ use crate::error::{DecodeError, EncodeError};
 /// Command 19 request: 24-bit final assembly number encoded as 3 bytes big-endian.
 #[derive(Debug, Clone)]
 pub struct WriteFinalAssemblyRequest {
+    /// 24-bit final assembly number to write.
     pub final_assembly_number: u32,
 }
 
 /// Command 19 response: echoes the 24-bit final assembly number.
 ///
 /// Layout (3 bytes):
-///   [0..2] final_assembly_number (24-bit big-endian)
+///   0..2: `final_assembly_number` (24-bit big-endian)
 #[derive(Debug, Clone, PartialEq)]
 pub struct WriteFinalAssemblyResponse {
+    /// Echoed 24-bit final assembly number.
     pub final_assembly_number: u32,
 }
 

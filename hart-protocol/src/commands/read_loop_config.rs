@@ -11,11 +11,13 @@ pub struct ReadLoopConfigRequest;
 /// Command 7 response: loop polling address and current mode.
 ///
 /// Layout (2 bytes):
-///   [0] polling_address
-///   [1] loop_current_mode
+///   0: `polling_address`
+///   1: `loop_current_mode`
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadLoopConfigResponse {
+    /// Device polling address.
     pub polling_address: u8,
+    /// Loop current mode (0 = disabled, 1 = enabled).
     pub loop_current_mode: u8,
 }
 

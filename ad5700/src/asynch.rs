@@ -30,6 +30,11 @@ where
     /// Transmit `data` over the HART bus asynchronously.
     ///
     /// Asserts RTS before writing, then deasserts RTS after flushing.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Ad5700Error::Uart`] on UART write/flush failures or
+    /// [`Ad5700Error::NoCarrier`] if RTS toggling fails.
     pub async fn transmit(
         &mut self,
         data: &[u8],
@@ -44,6 +49,10 @@ where
     /// Read available bytes into `buf` asynchronously.
     ///
     /// Returns the number of bytes read.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Ad5700Error::Uart`] on UART read failures.
     pub async fn receive_into(
         &mut self,
         buf: &mut [u8],

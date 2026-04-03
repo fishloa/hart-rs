@@ -11,15 +11,19 @@ pub struct ReadDynamicVarClassRequest;
 /// Command 8 response: classifications for PV, SV, TV, QV.
 ///
 /// Layout (4 bytes):
-///   [0] pv_classification
-///   [1] sv_classification
-///   [2] tv_classification
-///   [3] qv_classification
+///   0: `pv_classification`
+///   1: `sv_classification`
+///   2: `tv_classification`
+///   3: `qv_classification`
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadDynamicVarClassResponse {
+    /// Primary variable classification code.
     pub pv_classification: u8,
+    /// Secondary variable classification code.
     pub sv_classification: u8,
+    /// Tertiary variable classification code.
     pub tv_classification: u8,
+    /// Quaternary variable classification code.
     pub qv_classification: u8,
 }
 

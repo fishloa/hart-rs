@@ -53,6 +53,10 @@ where
     ///
     /// The receive phase is wrapped in a [`RESPONSE_TIMEOUT_MS`]-millisecond timeout.
     /// Returns `HartError::Timeout` if no complete frame arrives in time.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HartError`] on encode, transmit, decode, or timeout errors.
     pub async fn send_command<Req, Resp>(
         &mut self,
         address: &Address,
@@ -90,7 +94,7 @@ where
 
         let receive_fut = self.receive_response::<Resp>();
         with_timeout(
-            Duration::from_millis(RESPONSE_TIMEOUT_MS as u64),
+            Duration::from_millis(u64::from(RESPONSE_TIMEOUT_MS)),
             receive_fut,
         )
         .await

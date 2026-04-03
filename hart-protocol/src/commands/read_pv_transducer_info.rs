@@ -12,17 +12,22 @@ pub struct ReadPvTransducerInfoRequest;
 /// Command 14 response: transducer serial number, limits, and minimum span.
 ///
 /// Layout (16 bytes):
-///   [0..2]  transducer_serial (24-bit big-endian, 3 bytes)
-///   [3]     unit code
-///   [4..7]  upper_limit (f32 big-endian)
-///   [8..11] lower_limit (f32 big-endian)
-///   [12..15] minimum_span (f32 big-endian)
+///   0..2:  `transducer_serial` (24-bit big-endian, 3 bytes)
+///   3:     unit code
+///   4..7:  `upper_limit` (f32 big-endian)
+///   8..11: `lower_limit` (f32 big-endian)
+///   12..15: `minimum_span` (f32 big-endian)
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadPvTransducerInfoResponse {
+    /// 24-bit transducer serial number.
     pub transducer_serial: u32,
+    /// Engineering unit code.
     pub unit: UnitCode,
+    /// Upper transducer limit.
     pub upper_limit: f32,
+    /// Lower transducer limit.
     pub lower_limit: f32,
+    /// Minimum span.
     pub minimum_span: f32,
 }
 

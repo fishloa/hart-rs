@@ -1,3 +1,5 @@
+//! HART engineering unit codes (HCF_SPEC-183, Table 2).
+
 /// HART engineering unit codes from HCF_SPEC-183 (HART Common Tables), Table 2.
 /// Expansion range codes (170-219) have classification-dependent meanings and
 /// are represented as `ExpansionRange(u8)`.
@@ -34,7 +36,7 @@ pub enum UnitCode {
     Atmospheres,
     /// inches of water at 60 deg F
     InchesWaterColumn60F,
-    /// megapascal (MPa)
+    /// megapascal (`MPa`)
     MegaPascals,
     /// inches of water at 4 deg C
     InchesWaterColumn4C,
@@ -256,6 +258,9 @@ pub enum UnitCode {
 }
 
 impl UnitCode {
+    /// Convert a raw `u8` unit code into a [`UnitCode`] variant.
+    #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub fn from_u8(code: u8) -> Self {
         match code {
             // Pressure
@@ -395,6 +400,9 @@ impl UnitCode {
         }
     }
 
+    /// Convert this [`UnitCode`] back to its raw `u8` wire representation.
+    #[must_use]
+    #[allow(clippy::too_many_lines, clippy::match_same_arms)]
     pub fn as_u8(&self) -> u8 {
         match self {
             // Pressure

@@ -11,11 +11,13 @@ pub struct ReadLoopCurrentRequest;
 /// Command 2 response: loop current (mA) and percent of range.
 ///
 /// Layout (8 bytes):
-///   [0..3] loop current in mA (f32 big-endian)
-///   [4..7] percent of range (f32 big-endian)
+///   0..3: loop current in mA (f32 big-endian)
+///   4..7: percent of range (f32 big-endian)
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadLoopCurrentResponse {
+    /// Loop current in milliamperes.
     pub current_ma: f32,
+    /// Percent of range.
     pub percent_of_range: f32,
 }
 

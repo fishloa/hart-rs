@@ -52,6 +52,10 @@ where
     ///
     /// Encodes the request, transmits it, receives bytes, feeds them into the
     /// decoder, then parses and returns the `(ResponseStatus, Resp)` pair.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HartError`] on encode, transmit, decode, or timeout errors.
     pub fn send_command<Req, Resp>(
         &mut self,
         address: &Address,

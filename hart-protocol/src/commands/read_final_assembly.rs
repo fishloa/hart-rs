@@ -11,9 +11,10 @@ pub struct ReadFinalAssemblyRequest;
 /// Command 16 response: 24-bit final assembly number.
 ///
 /// Layout (3 bytes):
-///   [0..2] final_assembly_number (24-bit big-endian)
+///   0..2: `final_assembly_number` (24-bit big-endian)
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadFinalAssemblyResponse {
+    /// 24-bit final assembly number.
     pub final_assembly_number: u32,
 }
 

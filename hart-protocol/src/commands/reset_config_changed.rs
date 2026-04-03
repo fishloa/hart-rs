@@ -7,15 +7,17 @@ use crate::error::{DecodeError, EncodeError};
 /// Command 38 request: configuration change counter (u16), encoded as 2 bytes big-endian.
 #[derive(Debug, Clone)]
 pub struct ResetConfigChangedRequest {
+    /// Configuration change counter value.
     pub configuration_change_counter: u16,
 }
 
 /// Command 38 response: echoes the configuration change counter.
 ///
 /// Layout (2 bytes):
-///   [0..1] configuration_change_counter (big-endian u16)
+///   0..1: `configuration_change_counter` (big-endian u16)
 #[derive(Debug, Clone, PartialEq)]
 pub struct ResetConfigChangedResponse {
+    /// Echoed configuration change counter value.
     pub configuration_change_counter: u16,
 }
 
@@ -27,8 +29,9 @@ impl CommandRequest for ResetConfigChangedRequest {
             return Err(EncodeError::BufferTooSmall);
         }
         let c = self.configuration_change_counter;
-        buf[0] = (c >> 8) as u8;
-        buf[1] = (c & 0xFF) as u8;
+        let bytes = c.to_be_bytes();
+        buf[0] = bytes[0];
+        buf[1] = bytes[1];
         Ok(2)
     }
 }
@@ -40,7 +43,7 @@ impl CommandResponse for ResetConfigChangedResponse {
         if data.len() < 2 {
             return Err(DecodeError::BufferTooShort);
         }
-        let configuration_change_counter = ((data[0] as u16) << 8) | (data[1] as u16);
+        let configuration_change_counter = (u16::from(data[0]) << 8) | u16::from(data[1]);
         Ok(ResetConfigChangedResponse {
             configuration_change_counter,
         })

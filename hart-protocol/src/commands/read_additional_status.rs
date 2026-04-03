@@ -16,6 +16,7 @@ pub struct ReadAdditionalStatusRequest;
 /// Command 48 response: up to 25 device-specific status bytes.
 #[derive(Debug, Clone)]
 pub struct ReadAdditionalStatusResponse {
+    /// Device-specific additional status bytes.
     pub data: Vec<u8, CMD48_MAX_STATUS_BYTES>,
 }
 

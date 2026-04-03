@@ -4,8 +4,9 @@
 //! and `embassy-time` timeouts to provide a typed async HART master API.
 
 #![no_std]
+#![warn(missing_docs)]
 
-/// The version of this crate, set at compile time from Cargo.toml.
+/// The version of this crate, set at compile time from `Cargo.toml`.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod master;

@@ -14,9 +14,10 @@ pub struct WriteLongTagRequest {
 /// Command 22 response: echoes the 32-byte plain ASCII long tag.
 ///
 /// Layout (32 bytes):
-///   [0..31] long_tag — plain ASCII (NOT packed).
+///   0..31: `long_tag` — plain ASCII (NOT packed).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WriteLongTagResponse {
+    /// 32-byte plain ASCII long tag.
     pub long_tag: [u8; 32],
 }
 

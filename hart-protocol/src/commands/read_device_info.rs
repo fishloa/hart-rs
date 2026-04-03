@@ -12,23 +12,31 @@ pub struct ReadDeviceInfoRequest;
 /// Command 15 response: PV range, transfer function, and device info.
 ///
 /// Layout (17 bytes):
-///   [0]     pv_alarm_selection
-///   [1]     pv_transfer_function
-///   [2]     pv_unit (unit code)
-///   [3..6]  upper_range_value (f32 big-endian)
-///   [7..10] lower_range_value (f32 big-endian)
-///   [11..14] damping_value (f32 big-endian)
-///   [15]    write_protect_code
-///   [16]    private_label_distributor_code
+///   0:     `pv_alarm_selection`
+///   1:     `pv_transfer_function`
+///   2:     `pv_unit` (unit code)
+///   3..6:  `upper_range_value` (f32 big-endian)
+///   7..10: `lower_range_value` (f32 big-endian)
+///   11..14: `damping_value` (f32 big-endian)
+///   15:    `write_protect_code`
+///   16:    `private_label_distributor_code`
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReadDeviceInfoResponse {
+    /// PV alarm selection code.
     pub pv_alarm_selection: u8,
+    /// PV transfer function code.
     pub pv_transfer_function: u8,
+    /// PV engineering unit code.
     pub pv_unit: UnitCode,
+    /// Upper range value.
     pub upper_range: f32,
+    /// Lower range value.
     pub lower_range: f32,
+    /// Damping value in seconds.
     pub damping: f32,
+    /// Write protect code.
     pub write_protect: u8,
+    /// Private label distributor code.
     pub private_label_distributor: u8,
 }
 

@@ -1,8 +1,8 @@
 //! HART 6-bit packed ASCII string encoding/decoding.
 //!
 //! HART uses a 6-bit character encoding where:
-//!   code = ascii_char - 0x20   (subtract 0x20 to get 6-bit code)
-//!   ascii_char = code + 0x20   (add 0x20 to decode back to ASCII)
+//!   `code = ascii_char - 0x20`   (subtract 0x20 to get 6-bit code)
+//!   `ascii_char = code + 0x20`   (add 0x20 to decode back to ASCII)
 //!
 //! Only printable ASCII characters in the range 0x20-0x5F are valid.
 //! Characters outside this range are clamped/masked to fit.
@@ -23,6 +23,20 @@
 /// Processes 4 input bytes at a time into 3 output bytes.
 /// `src` is padded with spaces (0x20) if not a multiple of 4.
 /// Returns the number of bytes written to `dst`.
+///
+/// # Examples
+///
+/// ```
+/// use hart_protocol::packed_string::{encode_packed, decode_packed};
+///
+/// let mut packed = [0u8; 3];
+/// let n = encode_packed(b"TEST", &mut packed);
+/// assert_eq!(n, 3);
+///
+/// let mut ascii = [0u8; 4];
+/// decode_packed(&packed, &mut ascii);
+/// assert_eq!(&ascii, b"TEST");
+/// ```
 pub fn encode_packed(src: &[u8], dst: &mut [u8]) -> usize {
     let n_groups = src.len().div_ceil(4);
     let mut written = 0;
@@ -32,29 +46,35 @@ pub fn encode_packed(src: &[u8], dst: &mut [u8]) -> usize {
         }
         let base = g * 4;
         // Convert ASCII to 6-bit code by subtracting 0x20; clamp to 6 bits
-        let c0 = (src.get(base).copied().unwrap_or(b' ').saturating_sub(0x20) & 0x3F) as u16;
-        let c1 = (src
-            .get(base + 1)
-            .copied()
-            .unwrap_or(b' ')
-            .saturating_sub(0x20)
-            & 0x3F) as u16;
-        let c2 = (src
-            .get(base + 2)
-            .copied()
-            .unwrap_or(b' ')
-            .saturating_sub(0x20)
-            & 0x3F) as u16;
-        let c3 = (src
-            .get(base + 3)
-            .copied()
-            .unwrap_or(b' ')
-            .saturating_sub(0x20)
-            & 0x3F) as u16;
+        let c0 = u16::from(src.get(base).copied().unwrap_or(b' ').saturating_sub(0x20) & 0x3F);
+        let c1 = u16::from(
+            src.get(base + 1)
+                .copied()
+                .unwrap_or(b' ')
+                .saturating_sub(0x20)
+                & 0x3F,
+        );
+        let c2 = u16::from(
+            src.get(base + 2)
+                .copied()
+                .unwrap_or(b' ')
+                .saturating_sub(0x20)
+                & 0x3F,
+        );
+        let c3 = u16::from(
+            src.get(base + 3)
+                .copied()
+                .unwrap_or(b' ')
+                .saturating_sub(0x20)
+                & 0x3F,
+        );
 
-        dst[written] = ((c0 << 2) | (c1 >> 4)) as u8;
-        dst[written + 1] = ((c1 << 4) | (c2 >> 2)) as u8;
-        dst[written + 2] = ((c2 << 6) | c3) as u8;
+        #[allow(clippy::cast_possible_truncation)]
+        {
+            dst[written] = ((c0 << 2) | (c1 >> 4)) as u8;
+            dst[written + 1] = ((c1 << 4) | (c2 >> 2)) as u8;
+            dst[written + 2] = ((c2 << 6) | c3) as u8;
+        }
         written += 3;
     }
     written
@@ -64,6 +84,20 @@ pub fn encode_packed(src: &[u8], dst: &mut [u8]) -> usize {
 ///
 /// Processes 3 input bytes at a time into 4 output characters.
 /// Returns the number of bytes written to `dst`.
+///
+/// # Examples
+///
+/// ```
+/// use hart_protocol::packed_string::{encode_packed, decode_packed};
+///
+/// let mut packed = [0u8; 3];
+/// encode_packed(b"TEST", &mut packed);
+///
+/// let mut ascii = [0u8; 4];
+/// let n = decode_packed(&packed, &mut ascii);
+/// assert_eq!(n, 4);
+/// assert_eq!(&ascii, b"TEST");
+/// ```
 pub fn decode_packed(src: &[u8], dst: &mut [u8]) -> usize {
     let n_groups = src.len() / 3;
     let mut written = 0;
@@ -72,9 +106,9 @@ pub fn decode_packed(src: &[u8], dst: &mut [u8]) -> usize {
             break;
         }
         let base = g * 3;
-        let b0 = src[base] as u16;
-        let b1 = src[base + 1] as u16;
-        let b2 = src[base + 2] as u16;
+        let b0 = u16::from(src[base]);
+        let b1 = u16::from(src[base + 1]);
+        let b2 = u16::from(src[base + 2]);
 
         let c0 = b0 >> 2;
         let c1 = ((b0 & 0x03) << 4) | (b1 >> 4);
@@ -82,10 +116,13 @@ pub fn decode_packed(src: &[u8], dst: &mut [u8]) -> usize {
         let c3 = b2 & 0x3F;
 
         // Convert 6-bit code back to ASCII by adding 0x20
-        dst[written] = (c0 as u8) + 0x20;
-        dst[written + 1] = (c1 as u8) + 0x20;
-        dst[written + 2] = (c2 as u8) + 0x20;
-        dst[written + 3] = (c3 as u8) + 0x20;
+        #[allow(clippy::cast_possible_truncation)]
+        {
+            dst[written] = (c0 as u8) + 0x20;
+            dst[written + 1] = (c1 as u8) + 0x20;
+            dst[written + 2] = (c2 as u8) + 0x20;
+            dst[written + 3] = (c3 as u8) + 0x20;
+        }
         written += 4;
     }
     written
